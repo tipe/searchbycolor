@@ -5,52 +5,146 @@
 #include <string.h>
 #include <string>
 
+#include "zlib-1.2.5/zlib.h"
+
 using namespace std;
+
 
 
 const int ian = 1;
 #define is_bigendian() ( (*(char*)&ian) == 0 )
 
+int getIntInRightOrder(char *buf)
+{
+	int result = 0;
+	if (!is_bigendian())
+	{
+		int tmp = 0;
+		for(int i = 3; i >= 0; i--)
+		{
+			if(buf[i] < 0)
+			{
+				tmp = 256 + buf[i];
+			}
+			else
+			{
+				tmp = buf[i];
+			}
+			result += tmp*pow(256, 3-i);
+		}
+	}
+	else
+	{
+		result = (int)buf;
+	}
+	return result;
+}
 
-#include "zlib-1.2.5/zlib.h"
+//==============================
 
-int count_type_chunks = 20;
-char* chunks[] = {"IHDR", "PLTE", "IDAT", "IEND",
+int getFileSize(FILE *file)
+{
+	int cur_file_pos = ftell(file);
+
+	if( fseek(file, 0, SEEK_END) != 0)
+	{
+		printf("File not read\n");
+		fseek(file, cur_file_pos, SEEK_SET);
+		return 1;
+	}
+
+	fseek(file, cur_file_pos, SEEK_SET);
+	return ftell(file);
+}
+
+//==============================
+
+const int count_chunks_type = 20;
+const string chunks[] = {"IHDR", "PLTE", "IDAT", "IEND",
                    "bKGD", "cHRM", "gAMA", "gAMA", "hIST", "iCCP", "iTXt", "pHYs",
                    "sBIT", "sPLT", "sRGB", "sRGB", "tEXt", "tIME", "tRNS", "zTXt"};
 
-char buf[256];
-unsigned int length = 0;
-
-int count_chunks = 0;
-
-
-int  count_uncompr = 256;
-char data_uncompr[256];
-
-int  count_compr;
-char *data_compr;
-
-int file_size = 0;
-int cur_pos = 0;
-
-int i_read = 0;
-int i_seek = 0;
-
-
-bool isCriticalChunk(char *buf)
+bool isChunk(char *buf)
 {
-	//cout<<"buf = "<<buf<<endl;
-	for(int i = 0; i < count_type_chunks; i++)
+	for(int i = 0; i < count_chunks_type; i++)
 	{
-		//cout<<"chunk = "<<chunks[i]<<endl;
-		if(strcmp(buf, chunks[i])==0)
+		if(strcmp(buf, chunks[i].c_str())==0)
 		{
 			return 1;
 		}
 	}	
 	return 0;
 }
+
+int getIHDRData(FILE *file, int &width, int &heigth)
+{
+	int cur_file_pos = ftell(file);
+	char buf[] = "0000";
+
+	if(fread(buf, 4, 1, file) != 1)
+	{
+		printf("PNG file not read\n");
+		return 1;
+	}	
+	width = getIntInRightOrder(buf);
+
+	if(fread(buf, 4, 1, file) != 1)
+	{
+		printf("PNG file not read\n");
+		return 1;
+	}	
+	heigth = getIntInRightOrder(buf);
+
+	fseek(file, cur_file_pos, SEEK_SET);
+	return 0;
+}
+
+bool isIHDRChunk(char *buf)
+{
+	if(strcmp(buf, "IHDR")==0)
+	{
+		return 1;
+	}
+	return 0;
+}
+
+bool isIDATChunk(char *buf)
+{
+	if(strcmp(buf, "IDAT")==0)
+	{
+		return 1;
+	}
+	return 0;
+}
+
+int getIDATData(char *idat_buf, FILE *file, int data_length)
+{
+	int cur_file_pos = ftell(file);
+	int i_read = fread(idat_buf, data_length, 1, file); 
+	if(i_read != 1)
+	{
+		printf("PNG file not read\n");
+		return 1;
+	}
+	fseek(file, cur_file_pos, SEEK_SET);
+	return 0;
+}
+
+int getUncompData(char *uncompr_buf, int &uncomp_data_length, char *idat_buf, int idat_data_length)
+{
+	if(idat_data_length > 0)
+	{
+		uncomp_data_length = 1000*idat_data_length;
+		uncompr_buf = new char[uncomp_data_length];
+
+		int uncompr_result = uncompress((Bytef*)uncompr_buf, (uLong*)&uncomp_data_length, (const Bytef*)idat_buf, (uLong)idat_data_length);
+		return uncompr_result;
+	}
+	return 0;
+}
+
+//==============================
+
 
 
 int main(int argc, char *argv[])
@@ -69,299 +163,103 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	
+	char buf[] = "0000";
+	unsigned int length_chunk_data = 0;
+	int count_chunks = 0;
+	int idat_data_length = 0;
+	char *idat_buf = NULL;
+	char *idat_tmp_buf = NULL;
 
-	// get file size
-	// i_seek = fseek(file, 0, SEEK_END);
-	// if(i_seek != 0)
-	// {
-	// 	printf("1 PNG file not read\n");
-	// 	return 1;
-	// }
-	// file_size = ftell(file);
-	// printf("file size = %d\n", file_size);
+	int file_width = 0;
+	int file_heigth = 0;
 
-	int flag = 0; // watch cur file pos
-
-	
-	i_seek = fseek(file, 8, SEEK_SET);
-	if(i_seek != 0)
+		
+	if(fseek(file, 8, SEEK_SET) != 0)
 	{
-		printf("2 PNG file not read\n");
+		printf("PNG file not read\n");
 		return 1;
 	}
-	flag+=8;
-	cur_pos =  ftell(file);
-
-	// printf("!!!! cur file pos = %d\n", ftell(file));
-
-	// printf("file cur pos = %ld\n", ftell(file));
-
-
-	// for(int i = 9; i < file_size-1; i++)
-	// {
-	// 	i_read = fread(buf, 1, 1, file);
-	// 	if(i_read != 1)
-	// 	{
-	// 		printf("22 PNG file not read\n");
-	// 		return 1;
-	// 	}
-
-	// 	if(i == 84 || i == 85 || i == 86 || i == 87)
-	// 	{
-	// 		printf("!!!! buf[%d] = %d\n", i, (int)buf[0]);
-	// 	}
-
-	// 	if(buf[0] == 's' || buf[0] == 'R' || buf[0] == 'G' || buf[0] == 'B')
-	// 	{
-	// 		printf("buf = %s\n", buf[0]);
-	// 		printf("file cur pos = %ld\n", ftell(file));
-	// 		continue;
-	// 	}
-	// 	if(buf[0] == 'g' || buf[0] == 'A' || buf[0] == 'M' || buf[0] == 'A')
-	// 	{
-	// 		printf("buf = %s\n", buf[0]);
-	// 		printf("file cur pos = %ld\n", ftell(file));
-	// 		continue;
-	// 	}
-	// 	if(buf[0] == 'I' || buf[0] == 'D' || buf[0] == 'A' || buf[0] == 'T')
-	// 	{
-	// 		printf("buf = %s\n", buf[0]);
-	// 		printf("file cur pos = %ld\n", ftell(file));
-	// 		continue;
-	// 	}
-	// 	if(buf[0] == 'p' || buf[0] == 'H' || buf[0] == 'Y' || buf[0] == 's')
-	// 	{
-	// 		printf("buf = %s\n", buf[0]);
-	// 		printf("file cur pos = %ld\n", ftell(file));
-	// 		continue;
-	// 	}
-	// 	if(buf[0] == 'I' || buf[0] == 'E' || buf[0] == 'N' || buf[0] == 'D')
-	// 	{
-	// 		printf("buf = %s\n", buf[0]);
-	// 		printf("file cur pos = %ld\n", ftell(file));
-	// 		continue;
-	// 	}
-	// }
 	
-	// i_seek = fseek(file, 8, SEEK_SET);
-	// if(i_seek != 0)
-	// {
-	// 	printf("2 PNG file not read\n");
-	// 	return 1;
-	// }
-	// flag=8;
 	
-	while(!feof(file))
+	while(fread(buf, 1, 4, file)==4)
 	{
-		// if(cur_pos > file_size)
-		// {
-		// 	break;
-		// }
-
-		length = 0;
-
-		//printf("cur pos file = %d\n", ftell(file));
-		
-		i_read = fread(buf, 1, 4, file); // read chunk data length
-		if(i_read != 4)
-		{
-			printf("3 PNG file not read %d\n", i_read);
-			return 1;
-		}
-		flag+=4;
-
-		printf("buf[0] = %d  ", buf[0]);
-		printf("buf[1] = %d  ", buf[1]);
-		printf("buf[2] = %d  ", buf[2]);
-		printf("buf[3] = %d  ", buf[3]);
-		
-		//printf("file cur pos after len = %ld\n", ftell(file));
-
-		if (!is_bigendian())
-		{
-			int tmp = 0;
-			for(int i = 3; i >= 0; i--)
-			{
-				//printf("buf[%d] = %d  ", i, (int)buf[i]);
-
-				//buf[i] = (int)buf[i] - 48;
-
-				if((int)buf[i] < 0)
-				{
-					tmp = (-2)*((int)buf[i]);
-					if((int)buf[i] == -128)
-					{
-						tmp--;
-					}
-				}
-				else
-				{
-					tmp = (int)buf[i];
-				}
+		length_chunk_data = getIntInRightOrder(buf);
 				
-				//printf("tmp = %d  ", tmp);
-				length += tmp*pow(256, i-3);
-			}
-		}
-		else
+		if(fread(buf, 4, 1, file) != 1)
 		{
-			length = (int)buf;
-		}
-
-		printf("length = %d\n", length);
-		
-
-		i_read = fread(buf, 4, 1, file); // read chunk type		
-		if(i_read != 1)
-		{
-			printf("4 PNG file not read, i_read = %d\n", i_read);
+			printf("PNG file not read\n");
 			return 1;
 		}
-		flag+=4;
-		//printf("chunk type = %s\n", buf);
 		
-		
-		if(isCriticalChunk(buf))
+		if(isChunk(buf))
 		{
 			count_chunks++;
-			printf("%dth chunk = %s\n", count_chunks, buf);
+			printf("%s (%d)\n", buf, length_chunk_data);
 		}
-
-
-		if(strcmp(buf, "IDAT")==0)
-		{
-			count_compr = length;
-
-			if(count_compr > 0)
-			{
-				data_compr = new char[count_compr];
-
-				i_read = fread(buf, length, 1, file);
-
-				if(i_read != 1)
-				{
-					printf("5 PNG file not read\n");
-					return 1;
-				}
-				flag+=length;
-
-
-				//for(int i = 0; i < count_compr; i++)
-				//{
-				if (!is_bigendian())
-				{
-					for(int i = 0; i < count_compr; i+=4)
-					{
-						swap(buf[i], buf[i+3]);
-						swap(buf[i+1], buf[i+2]);
-
-						for(int j = 0; j < 4; j++)
-						{
-							data_compr[i+j] = buf[i+j];	
-						}
-					}
-				}
-				else
-				{
-					for(int i = 0; i < count_compr; i++)
-					{
-						data_compr[i] = buf[i];
-					}
-				}
-
-				i_seek = fseek(file, 4, SEEK_CUR);	
-				if(i_seek != 0)
-				{
-					printf("6 PNG file not read\n");
-					return 1;
-				}
-				flag+=4;			
-			}
-		}
-		else
-		{
-			
-			i_seek = fseek(file, length+4, SEEK_CUR);	
-			
-									
-			if(i_seek != 0)
-			{
-				printf("7 PNG file not read\n");
-				return 1;
-			}
-			flag+=(length+4);	
-			cur_pos = ftell(file);
-			//printf("flag = %d, cur pos = %d\n", flag, cur_pos);
-			if(flag != cur_pos)
-			{
-				//printf("Error of read file\n");
-			}
-		}
-	}
 
 		
+		if(isIHDRChunk(buf))
+		{
+			if(getIHDRData(file, file_width, file_heigth) != 0)
+			{
+				cout<<"PNG file not read"<<endl;
+				return 1;
+			}
+		}
+
+		if(isIDATChunk(buf))
+		{
+			if(idat_tmp_buf != NULL)
+			{
+				delete idat_tmp_buf;
+				idat_tmp_buf = NULL;
+			}
+			idat_tmp_buf = new char[length_chunk_data];
+
+
+			getIDATData(idat_tmp_buf, file, length_chunk_data);
+			
+			if(idat_buf == NULL)
+			{
+				idat_buf = new char[getFileSize(file)];
+			}
+
+			for(unsigned int i = 0; i < length_chunk_data; i++)
+			{
+				idat_buf[idat_data_length + i] = idat_tmp_buf[i];
+			}
+
+			idat_data_length += length_chunk_data;
+		}
+		
+		
+		if(fseek(file, length_chunk_data+4, SEEK_CUR) != 0)
+		{
+			printf("PNG file not read\n");
+			return 1;
+		}
+		
+	}		
 
 	fclose(file);
 
-	// printf("count of critical chunk = %d\n", count_chunks);
-
-
-
-	printf("==========================\n");
 	
-	printf("count_compr = %d\n", count_compr);
+	char *uncompr_buf;
+	int uncomp_data_length = 0;
+	int uncompr_result = getUncompData(uncompr_buf, uncomp_data_length, idat_buf, idat_data_length);
+	cout<<"uncopr res = "<<uncompr_result<<endl;
 
-	if(count_compr > 0)
+	
+	for(int i = 0; i < file_heigth; i++)
 	{
-		//printf("data_compr[0] = %d\n", (int)data_compr[0]);
-		//printf("data_compr[1] = %d\n", (int)data_compr[1]);
-		for(int i = 7; i < count_compr-4; i++)
+		for(int j = 0; j < file_width; j+=4)
 		{
-			//printf("data_compr[%d] = %d\n", i, (int)data_compr[i]);
+			
 		}
-		int res_uncompr = uncompress((Bytef*)data_uncompr, (uLong*)&count_uncompr, (const Bytef*)buf, (uLong)length);
-		printf("res_uncompr = %d\n", res_uncompr);
-
-		delete data_compr;
 	}
 	
 
-	printf("==========================\n");
-
-
-	 
-
-
-	//  int err;
-	//  char example[] = "hello";
- //     uLong len = strlen(example)+1;
-
- //     uLong comprLen = 10*len;
- //     uLong uncomprLen;
- //     Byte *compr = new Byte[comprLen];
-	//  Byte *uncompr;
-  
- //     err = compress(compr, &comprLen, (const Bytef*)example, len);
-
- //     printf("err compr = %d, compr len = %d, initial len = %d\n", err, comprLen, len);
- //     //CHECK_ERR(err, "compress");
-  
- //     //strcpy((char*)uncompr, "garbage");
-  
- //     err = uncompress(uncompr, &uncomprLen, compr, comprLen);
-
- //     printf("err uncompr = %d, uncompr len = %d\n", err, uncomprLen);
- //     //CHECK_ERR(err, "uncompress");
-  
-    //  if (strcmp((char*)uncompr, hello))
-    //  {
-    //     fprintf(stderr, "bad uncompress\n");
-    //     exit(1);
-    // } else {
-    //      printf("uncompress(): %s\n", (char *)uncompr);
-    //  }
-
+	
     
 
 	return 0;

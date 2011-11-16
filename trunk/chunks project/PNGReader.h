@@ -1,12 +1,104 @@
 #ifndef PNGREADER_H
 #define PNGREADER_H
 
+#include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <vector>
 #include <string.h>
 #include <string>
 
+#include "MyDecompressor.h"
+
 using namespace std;
+
+
+struct Pixel
+{
+private:
+	unsigned int r;	
+	unsigned int g;
+	unsigned int b;
+
+	unsigned int alfa;
+
+public:
+
+	Pixel(unsigned int _r, unsigned int _g, unsigned int _b, unsigned int _alfa)
+	{
+		r = _r;
+		g = _g;
+		b = _b;
+		alfa = _alfa;
+	}
+
+	Pixel()
+	{
+		Pixel(0,0,0,0);
+	}
+
+	void setColor(unsigned int _r, unsigned int _g, unsigned int _b, unsigned int alfa)
+	{
+		r = _r;
+		g = _g;
+		b = _b;
+		alfa = alfa;
+	}
+
+	unsigned int getR()
+	{
+		return r;
+	}
+
+	unsigned int getG()
+	{
+		return g;
+	}
+
+	unsigned int getB()
+	{
+		return b;
+	}
+};
+
+
+
+struct Image
+{
+	int size;
+	int width;
+	int height;
+	
+	int color_type;
+	
+	Pixel **pixels;
+	
+	Image(int _width, int _height, int _color_type)
+	{
+		width = _width;
+		height = _height;
+
+		size = width*height;
+
+		pixels = new Pixel*[height];
+		for(int i = 0; i < height; i++)
+		{
+			pixels[i] = new Pixel[width];
+		}
+
+		color_type = _color_type;
+	}
+
+	void setPixel(int i, int j, unsigned int _r, unsigned int _g, unsigned int _b, unsigned int alfa=0)
+	{
+		pixels[i][j].setColor(_r, _g, _b, alfa);
+	}
+
+	Pixel getPixel(int i, int j)
+	{
+		return pixels[i][j];
+	}
+};
 
 
 struct ChunkParams
@@ -28,38 +120,48 @@ typedef std::vector<char> V_IDATData;
 class PNGReader
 {
 private:
-	FILE *file;
+	ifstream file;
 
-	char *file_name;
-	unsigned int file_size;
-	int file_width;
-	int file_heigth;
+	bool isInitData;
+	unsigned int img_size;
+	int img_width;
+	int img_heigth;
+
+	int bit_depth; 	
+	int colour_type; 	
+	int compr_method; 	
+	int filter_method; 
+	int interlace_method;
 
 	unsigned int data_length;
 
-	V_ChunksParams v_chunks_params;
 	V_IDATData v_idat_total_data;	
-	//char *idat_tmp_data;
+
+	void doInitData();
 	
 	bool is_bigendian();
 	int getIntInRightOrder(char *buf);
-
-	int getIDChunk(char *buf);
+	int getInt(char buf);
+	unsigned int getIntSum(unsigned int i1, unsigned int i2);
 
 	void getIHDRData();
 	char* getIDATData();
 
+	char* getPNGData(int &data_length);
+
+	void doDeFiltering(char *decompr_data, int decompr_data_len, Image *image);
+	int getIndexFilteringType(int cur_small_img);
+
+	void getSizeSmallImage(int cur_small_img, int &col, int &row);
+
 public:
 	PNGReader(char *file_name);
 	
-	unsigned int getFileSize();
-	unsigned int getFileWidth();
-	unsigned int getFileHeigth();
+	unsigned int getImgSize();
+	unsigned int getImgWidth();
+	unsigned int getImgHeigth();
 	
-	V_ChunksParams* getPNGChunksParams();
-	char* getPNGData(int &data_length);
-
-	int getChunksCount();
+	Image* getImageStruct();
 };
 
 #endif //PNGREADER_H

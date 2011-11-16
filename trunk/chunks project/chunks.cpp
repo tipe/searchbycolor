@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <iostream>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -7,42 +6,49 @@
 #include <stdexcept>
 
 #include "PNGReader.h"
-#include "MyDecompressor.h"
-#include "PNGWorker.h"
+
 
 
 using namespace std;
 
 
 
+int getPercentColor(Image *image, unsigned int r, unsigned int g, unsigned int b, unsigned int range)
+{
+	int count = 0;
+
+	for(int i = 0; i < image->height; i++)
+	{
+		for(int j = 0; j < image->width; j++)
+		{
+			if( pow(image->getPixel(i,j).getR() - r, 2) +
+			    pow(image->getPixel(i,j).getG() - g, 2) +
+			    pow(image->getPixel(i,j).getB() - b, 2) <= pow(range, 2))
+			{
+				count++;
+			}
+		}
+	}
+
+	return 100*count/(image->height*image->width);
+}
+
+
 int main(int argc, char *argv[])
 {
+	
 	if(argc < 2)
 	{
 		throw runtime_error("Please enter name of PNG file");
 	}
 
-	PNGReader reader = PNGReader(argv[1]);
+	PNGReader reader(argv[1]);
 	
-	V_ChunksParams *chunks_params = reader.getPNGChunksParams();
-	V_ChunksParams::iterator it = chunks_params->begin();
+	Image *image = reader.getImageStruct();
 
-	while(it != chunks_params->end())
-	{
-		cout<<it->chunk_type<<" ("<<it->chunk_length<<")"<<endl;
-		it++;
-	}
+	int percent = getPercentColor(image, 255, 0, 0, 0);
+	cout<<"percent = "<<percent<<endl;
 
-	int compr_data_len = 0;
-	char *compr_data = reader.getPNGData(compr_data_len);
-	
-	MyDecompressor decopressor = MyDecompressor(compr_data, compr_data_len);
-	int decompr_data_len = 0;
-	char *decompr_data = decopressor.getDecomprData(decompr_data_len);
-	//if(decompr_data != NULL) cout<<"len = "<<decompr_data_len<<endl;
-
-
-	PNGWorker worker = PNGWorker();
 
 	return 0;
 }

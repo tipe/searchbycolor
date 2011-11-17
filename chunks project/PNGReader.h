@@ -42,7 +42,7 @@ public:
 		r = _r;
 		g = _g;
 		b = _b;
-		alfa = alfa;
+		alfa = alfa;	//TODO assignment to itself
 	}
 
 	unsigned int getR()
@@ -65,7 +65,7 @@ public:
 
 struct Image
 {
-	int size;
+	int size;	//TODO duplicating data!
 	int width;
 	int height;
 	
@@ -80,7 +80,7 @@ struct Image
 
 		size = width*height;
 
-		pixels = new Pixel*[height];
+		pixels = new Pixel*[height];	//TODO no memory deallocation!!!
 		for(int i = 0; i < height; i++)
 		{
 			pixels[i] = new Pixel[width];
@@ -125,7 +125,7 @@ private:
 	bool isInitData;
 	unsigned int img_size;
 	int img_width;
-	int img_heigth;
+	int img_heigth;	//TODO correct misprint
 
 	int bit_depth; 	
 	int colour_type; 	
@@ -157,7 +157,7 @@ private:
 public:
 	PNGReader(char *file_name);
 	
-	unsigned int getImgSize();
+	unsigned int getImgSize();	//TODO duplicating data in Image struct
 	unsigned int getImgWidth();
 	unsigned int getImgHeigth();
 	

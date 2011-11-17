@@ -61,7 +61,7 @@ int PNGReader::getInt(char buf)
 }
 
 unsigned int PNGReader::getIntSum(unsigned int i1, unsigned int i2)
-{
+{	//TODO simplify
 	unsigned int res = i1 + i2;
 
 	if(res > 255)
@@ -84,7 +84,7 @@ void PNGReader::getIHDRData()
 	}	
 	img_width = getIntInRightOrder(buf);
 
-	file.read(buf, 4);
+	file.read(buf, 4);	//TODO duplicating reading routines
 	if(file.gcount() != 4)
 	{
 		throw runtime_error("PNG file not read");
@@ -126,7 +126,7 @@ void PNGReader::getIHDRData()
 	}	
 	interlace_method = getInt(buf[0]);
 	
-	file.seekg(cur_file_pos, ios::beg);
+	file.seekg(cur_file_pos, ios::beg);	//TODO unnecessary file seeking
 }
 
 
@@ -140,7 +140,7 @@ char* PNGReader::getIDATData()
 	{
 		throw runtime_error("PNG file not read");
 	}
-	file.seekg(cur_file_pos, ios::beg);
+	file.seekg(cur_file_pos, ios::beg);	//TODO unnecessary file seeking
 	
 	return idat_tmp_data;
 }
@@ -148,7 +148,7 @@ char* PNGReader::getIDATData()
 void PNGReader::doInitData()
 {
 	file.seekg(0, ios::end);
-	img_size = file.tellg();
+	img_size = file.tellg();	//TODO no need in img_size
 	file.seekg(0, ios::beg);
 
 	img_width = 0;
@@ -163,7 +163,7 @@ void PNGReader::doInitData()
 	file.read(buf, 4);
 	while(file.gcount() == 4)
 	{
-	 	data_length = getIntInRightOrder(buf);
+	 	data_length = getIntInRightOrder(buf);	//TODO convert data_length to local variable
 				
 		file.read(buf, 4);	
 		if(file.gcount() != 1)
@@ -191,7 +191,7 @@ void PNGReader::doInitData()
 
 	file.close();
 
-	isInitData = 1;
+	isInitData = 1;	//TODO who reads isInitData?
 }
 
 

@@ -46,7 +46,7 @@ void getImageColors(Image *image, int *result)
 			// U = R * (-0.169) + G * (-0.332) + B * 0.500 + 128.;
 			// V = R * 0.500 + G * (-0.419) + B * (-0.0813) + 128.;
 
-			if(R <= 128 && G <= 128 && B <= 128) // black
+			if(R <= 128 && G <= 128 && B <= 128) // black	//TODO range number should be given as a constant
 			{
 				my_shades[0]++;//black++;
 			}

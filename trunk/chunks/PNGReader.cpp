@@ -53,7 +53,7 @@ int PNGReader::getIntInRightOrder(char *buf)
 
 int PNGReader::getInt(char buf)
 {
-	if(buf < 0)
+	if(buf < 0)	//TODO simplify
 	{
 		return (256 + buf);
 	}
@@ -66,7 +66,7 @@ unsigned int PNGReader::getIntSum(unsigned int i1, unsigned int i2, unsigned int
 }
 
 
-int PNGReader::readInt(int count)
+int PNGReader::readInt(int count)	//TODO change signature
 {
 	char buf[] = "0000";
 	
@@ -170,7 +170,7 @@ void PNGReader::doInitData()
 
 PNGReader::PNGReader(char *file_name)
 {
-	file.open(file_name, fstream::binary);
+	file.open(file_name, fstream::binary);	//TODO open and close file in the same method
 	if(file.good() != true)
 	{
 		throw runtime_error("PNG file not open");

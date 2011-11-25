@@ -118,7 +118,7 @@ public:
 	{
 		if(pixels != NULL)
 		{
-			delete pixels;
+			delete pixels;	//TODO incorrect memory deallocation!!!
 		}
 	}
 };

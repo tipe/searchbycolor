@@ -9,119 +9,9 @@
 #include <string>
 
 #include "MyDecompressor.h"
+#include "Image.h"
 
 using namespace std;
-
-
-struct Pixel
-{
-private:
-	unsigned int r;	
-	unsigned int g;
-	unsigned int b;
-
-	unsigned int alpha;
-
-public:
-
-	Pixel(unsigned int r, unsigned int g, unsigned int b, unsigned int alpha)
-	{
-		this->r = r;
-		this->g = g;
-		this->b = b;
-		this->alpha = alpha;
-	}
-
-	Pixel()
-	{
-		Pixel(0,0,0,0);
-	}
-
-	void setColor(unsigned int r, unsigned int g, unsigned int b, unsigned int alpha)
-	{
-		this->r = r;
-		this->g = g;
-		this->b = b;
-		//cout<<"!!! _alfa = "<<_alfa<<endl;
-		this->alpha = alpha;
-	}
-
-	unsigned int getRed()
-	{
-		return r;
-	}
-
-	unsigned int getGreen()
-	{
-		return g;
-	}
-
-	unsigned int getBlue()
-	{
-		return b;
-	}
-
-	unsigned int getAlpha()
-	{
-		return alpha;
-	}
-};
-
-
-
-struct Image
-{
-private:
-	int width;
-	int height;
-	
-	int color_type;
-	
-	Pixel **pixels;
-
-public:	
-	Image(int width, int height, int color_type)
-	{
-		this->width = width;
-		this->height = height;
-
-		pixels = new Pixel*[height];
-		for(int i = 0; i < height; i++)
-		{
-			pixels[i] = new Pixel[width];
-		}
-
-		this->color_type = color_type;
-	}
-	
-	int getWidth()
-	{
-		return width;
-	}
-	
-	int getHeight()
-	{
-		return height;
-	}
-
-	void setPixel(int i, int j, unsigned int r, unsigned int g, unsigned int b, unsigned int alpha=0)
-	{
-		pixels[i][j].setColor(r, g, b, alpha);
-	}
-
-	Pixel getPixel(int i, int j)
-	{
-		return pixels[i][j];
-	}
-	
-	~Image()
-	{
-		if(pixels != NULL)
-		{
-			delete pixels;	//TODO incorrect memory deallocation!!!
-		}
-	}
-};
 
 
 
@@ -131,11 +21,11 @@ typedef vector<unsigned int> ScanLine;
 typedef vector<ScanLine> V_ScanLines;
 
 
-
 class PNGReader
 {
 private:
 	ifstream file;
+	string file_name;
 
 	int img_width;
 	int img_height;
@@ -150,23 +40,19 @@ private:
 
 	void doInitData();
 	
-	bool is_bigendian();
-	int getIntInRightOrder(char *buf);
-	int getInt(char buf);
-	unsigned int getIntSum(unsigned int i1, unsigned int i2, unsigned int i3);
-
-	int readInt(int count);
-
 	void getIHDRData();
 	char* getIDATData(unsigned int &data_length);
 
 	char* getPNGData(unsigned int &data_length);
 
 	void doDeFiltering(V_ScanLines &v_scanlines, Image *image);
+	void doDeFilteringType0(int j_count, int j_delta, int cur_small_img, int cur_row, int i, ScanLine scanline, Image *image);
 	void getScanLines(V_ScanLines &v_scanlines, char *decompr_data, int decompr_data_len);
+	int getDecomprDataLen();
 
 	void getSizeSmallImage(int cur_small_img, int &col, int &row);
-	void getCoordPixel(int cur_red_image, int cur_row, int cur_col, int &i, int &j);
+	void getCoordPixel(int cur_small_image, int cur_row, int cur_col, int &i, int &j);
+	int getCurRow(int cur_small_img, int general_index);
 
 	unsigned int getPaethPredictor(unsigned int prev, unsigned int up, unsigned int diag);
 

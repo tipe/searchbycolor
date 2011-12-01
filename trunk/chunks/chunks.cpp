@@ -6,33 +6,42 @@
 #include <stdexcept>
 
 #include "PNGReader.h"
-
-#define BLACK "black"
-#define RED "red"
-#define YELLOW "yellow"
-#define GREEN "green"
-#define BLUE "blue"
-#define MAGENTA "magenta"
-#define WHITE "white"
-#define CYAN "cyan"
-
-const int shades_count = 8;
-const string shades[] = {"black", "red", "yellow", "green", "blue", "magenta", "white", "cyan"};
-
+#include "BMPReader.h"
 
 using namespace std;
 
 
-void getImageColors(Image *image, int *result)
+void getImageColors(Image *image, int divider, float ***result)
 {
-	int /*Y, U, V,*/ R, G, B;
-	int my_shades[shades_count];
-	for(int i = 0; i < shades_count; i++)
+	int R, G, B;
+
+	result = new float**[divider];
+	for(int i = 0; i < divider; i++)
 	{
-		my_shades[i] = 0;
+		result[i] = new float*[divider];
 	}
-	// int black = 0, red = 0, yellow = 0, green = 0;
-	// int blue = 0, magenta = 0, white = 0, cyan = 0;
+	for(int i = 0; i < divider; i++)
+	{
+		for(int j = 0; j < divider; j++)
+		{
+			result[i][j] = new float[divider];
+		}
+	}
+
+
+	for(int i = 0; i < divider; i++)
+	{
+		for(int j = 0; j < divider; j++)
+		{
+			for(int k = 0; k < divider; k++)
+			{
+				result[i][j][k] = 0;
+			}
+		}		
+	}
+
+	
+	int border = 256/divider;
 
 	for(int i = 0; i < image->getHeight(); i++)
 	{
@@ -42,61 +51,40 @@ void getImageColors(Image *image, int *result)
 			G = image->getPixel(i,j).getGreen();
 			B = image->getPixel(i,j).getBlue();
 
-			// Y = R * 0.299 + G * 0.587 + B * 0.114;
-			// U = R * (-0.169) + G * (-0.332) + B * 0.500 + 128.;
-			// V = R * 0.500 + G * (-0.419) + B * (-0.0813) + 128.;
+			for(int i = 0; i < divider; i++) // red
+			{
+				for(int j = 0; j < divider; j++) // green
+				{
+					for(int k = 0; k < divider; k++) // blue
+					{
+						if(R >= i*border && R < (i+1)*border &&
+						   G >= j*border && G < (j+1)*border &&
+						   B >= k*border && B < (k+1)*border)
 
-			if(R <= 128 && G <= 128 && B <= 128) // black	//TODO range number should be given as a constant
-			{
-				my_shades[0]++;//black++;
-			}
-			else
-			if(R > 128 && G <= 128 && B <= 128) // red
-			{
-				my_shades[1]++;//red++;
-			}
-			else
-			if(R > 128 && G > 128 && B <= 128) // yellow
-			{
-				my_shades[2]++;//yellow++;
-			}
-			else
-			if(R <= 128 && G > 128 && B <= 128) // green
-			{
-				my_shades[3]++;//green++;
-			}
-			else
-			if(R > 128 && G <= 128 && B > 128) // blue
-			{
-				my_shades[4]++;//blue++;
-			}
-			else
-			if(R > 128 && G <= 128 && B > 128) // magenta
-			{
-				my_shades[5]++;//magenta++;
-			}
-			else
-			if(R > 128 && G > 128 && B > 128) // white
-			{
-				my_shades[6]++;//white++;
-			}
-			else
-			{
-				my_shades[7]++;//cyan++;
+						result[i][j][k]++;
+					}
+				}
 			}
 		}
 	}
 
 	int size = image->getWidth()*image->getHeight();
-	for(int i = 0; i < shades_count; i++)
+
+	for(int i = 0; i < divider; i++) // red
 	{
-		result[i] = 100*my_shades[i]/size;
+		for(int j = 0; j < divider; j++) // green
+		{
+			for(int k = 0; k < divider; k++) // blue
+			{
+				result[i][j][k] = 100*result[i][j][k]/size;
+			}
+		}
 	}
-	
+
 }
 
 
-int getPercentColor(Image *image, unsigned int r, unsigned int g, unsigned int b, unsigned int range)
+bool isColorBasic(Image *image, unsigned int r, unsigned int g, unsigned int b, unsigned int range, int &percent)
 {
 	int count = 0;
 
@@ -113,42 +101,79 @@ int getPercentColor(Image *image, unsigned int r, unsigned int g, unsigned int b
 		}
 	}
 
-	return 100*count/(image->getHeight()*image->getWidth());
+	percent = 100*count/(image->getHeight()*image->getWidth());
+
+	if(percent >= 30)
+	{
+		return 1;
+	}
+	return 0;
 }
 
 
 int main(int argc, char *argv[])
-{
-	
+{	
 	if(argc < 2)
 	{
 		throw runtime_error("Please enter name of PNG file");
 	}
 
 	PNGReader reader(argv[1]);
+
+	//BMPReader reader(argv[1]);
 	
 	Image *image = reader.getImageStruct();
+	//cout<<"!!! img height = "<<image->getHeight()<<" img width = "<<image->getWidth()<<endl;
 
-	//for(int i = 0; i < image->getHeight(); i++)
-	{
+	// //for(int i = 0; i < image->getHeight(); i++)
+	// {
 		for(int j = 0; j < image->getWidth(); j++)
 		{
-			//<<j<<":("<<image->getPixel(60,j).getRed()<<","<<image->getPixel(60,j).getGreen()<<
-			  //        ","<<image->getPixel(60,j).getBlue()<<","<<image->getPixel(60,j).getAlpha()<<")  ";
+			//cout<<j<<":("<<image->getPixel(0,j).getRed()<<","<<image->getPixel(0,j).getGreen()<<
+			  //        ","<<image->getPixel(0,j).getBlue()<<","<<image->getPixel(0,j).getAlpha()<<")  ";
+		}
+	// }
+
+	int percent = 0;
+	bool res = isColorBasic(image, 255, 0, 0, 0, percent);
+	cout<<"percent = "<<percent<<" is basic = "<<res<<endl;
+
+	float ***result;
+	int divider = 10;
+	getImageColors(image, divider, result);
+
+	for(int i = 0; i < divider; i++) // red
+	{
+		for(int j = 0; j < divider; j++) // green
+		{
+			for(int k = 0; k < divider; k++) // blue
+			{
+				//cout<<result[i][j][k]<<" ";
+			}
+		}
+	}
+	
+
+	for(int i = 0; i < divider; i++) 
+	{
+		for(int j = 0; j < divider; j++) 
+		{
+			//delete [] result[i][j];????
 		}
 	}
 
-	int percent = getPercentColor(image, 255, 0, 0, 0);
-	cout<<"percent = "<<percent<<endl;
-
-	int my_shades[shades_count];
-	getImageColors(image, my_shades);
-	for(int i = 0; i < shades_count; i++)
+	for(int i = 0; i < divider; i++) 
 	{
-		cout<<shades[i]<<" "<<my_shades[i]<<"%"<<endl;
+		//delete[] result[i];????
 	}
 
-	delete image;
+	//delete[] result;???
+
+
+
+	//delete image;
+
+
 
 	return 0;
 }

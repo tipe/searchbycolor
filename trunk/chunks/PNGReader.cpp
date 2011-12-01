@@ -1,106 +1,22 @@
 #include "PNGReader.h"
 #include <iostream>
-#include <math.h>
+
 #include <stdlib.h>
 #include <stdexcept>
 
 
 
-bool PNGReader::is_bigendian()
-{
-	const int ian = 1;
-	return ( (*(char*)&ian) == 0 );
-} 
-
-
-int PNGReader::getIntInRightOrder(char *buf)
-{
-	int result = 0;
-	if (!is_bigendian())
-	{
-		int tmp = 0;
-		for(int i = 3; i >= 0; i--)
-		{
-			if(buf[i] < 0)
-			{
-				tmp = 256 + buf[i];
-			}
-			else
-			{
-				tmp = buf[i];
-			}
-			result += tmp*pow(256, 3-i);
-		}
-	}
-	else
-	{
-		int tmp = 0;
-		for(int i = 0; i < 4; i++)
-		{
-			if(buf[i] < 0)
-			{
-				tmp = 256 + buf[i];
-			}
-			else
-			{
-				tmp = buf[i];
-			}
-			result += tmp*pow(256, i);
-		}
-	}
-	return result;
-}
-
-int PNGReader::getInt(char buf)
-{
-	if(buf < 0)	//TODO simplify
-	{
-		return (256 + buf);
-	}
-	return (int)buf;
-}
-
-unsigned int PNGReader::getIntSum(unsigned int i1, unsigned int i2, unsigned int i3=0)
-{
-	return (i1 + i2 + i3) % 256;
-}
-
-
-int PNGReader::readInt(int count)	//TODO change signature
-{
-	char buf[] = "0000";
-	
-	file.read(buf, count);
-	if(file.gcount() != count)
-	{
-		throw runtime_error("1 PNG file not read");
-	}
-	
-	if(count == 4)
-	{
-		return getIntInRightOrder(buf);
-	}
-	else
-	if(count == 1)
-	{
-		return getInt(buf[0]);
-	}
-	else
-	{
-		return 0;
-	}
-}
 
 
 void PNGReader::getIHDRData()
 {
-	img_width = readInt(4);
-	img_height = readInt(4);
-	bit_depth = readInt(1);
-	colour_type = readInt(1);
-	compr_method = readInt(1);
-	filter_method = readInt(1);
-	interlace_method = readInt(1);
+	img_width        = readInt(file);
+	img_height       = readInt(file);
+	bit_depth        = readByte(file);
+	colour_type      = readByte(file);
+	compr_method     = readByte(file);
+	filter_method    = readByte(file);
+	interlace_method = readByte(file);
 }
 
 
@@ -111,7 +27,7 @@ char* PNGReader::getIDATData(unsigned int &data_length)
 	file.read(idat_tmp_data, data_length);
 	if(file.gcount() != (int)data_length)
 	{
-		throw runtime_error("8 PNG file not read");
+		throw runtime_error("PNG file not read");
 	}
 	
 	return idat_tmp_data;
@@ -124,19 +40,27 @@ void PNGReader::doInitData()
 
 	unsigned int data_length = 0;
 	char buf[] = "0000";	
+
+	file.open(file_name.c_str(), fstream::binary);
+
+	if(file.good() != true)
+	{
+		throw runtime_error("PNG file not open");
+	}
 		
 	file.seekg(8, ios::beg);
 		
 	file.read(buf, 4);
 
+
 	while(file.gcount() == 4)
 	{
-	 	data_length = getIntInRightOrder(buf);
+		data_length = getIntInRightOrder(buf);
 				
 		file.read(buf, 4);	
 		if(file.gcount() != 4)
 		{
-	 		throw runtime_error("9 PNG file not read");
+	 		throw runtime_error("PNG file not read");
 		}
 				
 		if(strcmp(buf, "IHDR")==0)
@@ -154,6 +78,8 @@ void PNGReader::doInitData()
 				v_idat_total_data.push_back(idat_tmp_buf[i]);
 			}
 			file.seekg(4, ios::cur);	
+
+			delete[] idat_tmp_buf;
 		}
 		else
 		{
@@ -170,11 +96,13 @@ void PNGReader::doInitData()
 
 PNGReader::PNGReader(char *file_name)
 {
-	file.open(file_name, fstream::binary);	//TODO open and close file in the same method
+	this->file_name = file_name;
+	file.open(file_name, fstream::binary);
 	if(file.good() != true)
 	{
 		throw runtime_error("PNG file not open");
 	}
+	file.close();
 }
 
 char* PNGReader::getPNGData(unsigned int &data_length)
@@ -196,33 +124,33 @@ void PNGReader::getSizeSmallImage(int cur_small_img, int &col, int &row)
 	switch(cur_small_img)
 	{
 		case 1:
-			col = (img_width+1)/8; if((img_width+1)%8 >= 1) col++;			
-			row = (img_height+1)/8; if((img_height+1)%8 >= 1) row++;
+			col = img_width/8; if(img_width%8 >= 1) col++;			
+			row = img_height/8; if(img_height%8 >= 1) row++;
 			break;
 
 		case 2:
-			col = (img_width+1)/8; if((img_width+1)%8 >= 5) col++;			
-			row = (img_height+1)/8; if((img_height+1)%8 >= 1) row++;
+			col = img_width/8; if(img_width%8 >= 5) col++;			
+			row = img_height/8; if(img_height%8 >= 1) row++;
 			break;
 
 		case 3:
-			col = (img_width+1)/4; if((img_width+1)%4 >= 1) col++;
-			row = (img_height+1)/8; if((img_height+1)%8 >= 5) row++;
+			col = img_width/4; if(img_width%4 >= 1) col++;
+			row = img_height/8; if(img_height%8 >= 5) row++;
 			break;
 
 		case 4:
-			col = (img_width+1)/4; if((img_width+1)%4 >= 3) col++;
-			row = (img_height+1)/4; if((img_height+1)%4 >= 1) row++;
+			col = img_width/4; if(img_width%4 >= 3) col++;
+			row = img_height/4; if(img_height%4 >= 1) row++;
 			break;
 
 		case 5:
-			col = (img_width+1)/2; if((img_width+1)%2 >= 1) col++;
-			row = (img_height+1)/4; if((img_height+1)%4 >= 3) row++;
+			col = img_width/2; if(img_width%2 >= 1) col++;
+			row = img_height/4; if(img_height%4 >= 3) row++;
 			break;	
 
 		case 6:
-			col = (img_width+1)/2;
-			row = (img_height+1)/2; if((img_height+1)%2 >= 1) row++;
+			col = img_width/2;
+			row = img_height/2; if(img_height%2 >= 1) row++;
 			break;
 
 		case 7:
@@ -233,12 +161,12 @@ void PNGReader::getSizeSmallImage(int cur_small_img, int &col, int &row)
 }
 
 
-void PNGReader::getCoordPixel(int cur_red_image, int cur_row, int cur_col, int &i, int &j)
+void PNGReader::getCoordPixel(int cur_small_img, int cur_row, int cur_col, int &i, int &j)
 {
-	switch(cur_red_image)
+	switch(cur_small_img)
 	{
 		case 1:
-			i = 8*cur_row;     j =8*cur_col;
+			i = 8*cur_row;     j = 8*cur_col;
 			break;
 
 		case 2:
@@ -246,15 +174,24 @@ void PNGReader::getCoordPixel(int cur_red_image, int cur_row, int cur_col, int &
 			break;
 
 		case 3:
-			i = 4*cur_row;     j = 8*cur_col + 4;;
+			i = 4*cur_row;     j = 8*cur_col + 4;
 			break;
 
 		case 4:
-			i = 4*cur_row;     j = 4*cur_col + 2;;
+			i = 4*cur_row;     j = 4*cur_col + 2;
 			break;
 
 		case 5:
-			i = 8*cur_row;     j = 8*cur_col;
+			if(cur_row%2 == 0)
+			{
+				i = 4*cur_row + 2;
+			}
+			else
+			{
+				i = 4*(cur_row - 1) + 6;
+			}			     
+
+			j = 2*cur_col;
 			break;
 			
 		case 6:
@@ -262,9 +199,22 @@ void PNGReader::getCoordPixel(int cur_red_image, int cur_row, int cur_col, int &
 			break;		
 
 		case 7:
-			i = cur_row;       j = 2*cur_col + 1;
+			i = 2*cur_row + 1; j = cur_col;       
 			break;		
 	}
+}
+
+int PNGReader::getCurRow(int cur_small_img, int general_index)
+{
+	int row, col;
+
+	for(int i = 1; i < cur_small_img; i++)
+	{
+		getSizeSmallImage(i, col, row);
+		general_index -= row;
+	}
+
+	return general_index;
 }
 
 
@@ -295,6 +245,41 @@ unsigned int PNGReader::getPaethPredictor(unsigned int prev, unsigned int up, un
     return Pr;
 }
 
+void PNGReader::doDeFilteringType0(int j_count, int j_delta, int cur_small_img, int cur_row, int i, ScanLine scanline, Image *image)
+{
+	int cur_col = 0;
+	int pix_i, pix_j;
+
+	for(int j = 2; j <= 2 + j_count - j_delta + 1; j+=j_delta)
+	{
+		if(interlace_method == 0)
+		{
+			pix_i = i;
+			pix_j = (j-2)/j_delta;
+		}
+		else
+		if(interlace_method == 1)
+		{
+			getCoordPixel(cur_small_img, cur_row, cur_col, pix_i, pix_j);
+		}				
+
+		int alpha = 0;
+		if(colour_type == 6)
+		{
+			alpha = getUnsignedInt(scanline[j+3]);
+		}
+
+
+		
+		image->setPixel(pix_i, pix_j, getUnsignedInt(scanline[j]),
+			                		  getUnsignedInt(scanline[j+1]),
+			                		  getUnsignedInt(scanline[j+2]),
+			                		  alpha);
+			       
+		cur_col++;	
+	}
+}
+
 void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 {
 	if(filter_method != 0)
@@ -320,47 +305,27 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 
 		j_count = v_scanlines[i].size() - 2;
 
-		int filt_type = v_scanlines[i][1];
-
+		int filt_type = getUnsignedInt(v_scanlines[i][1]);
+		
 		int cur_small_img = v_scanlines[i][0];
 		int cur_col = 0, cur_row = 0;
 
+
 		if(interlace_method == 1)
 		{
-			getSizeSmallImage(cur_small_img, cur_col, cur_row);
+			cur_row = getCurRow(cur_small_img, i);
 		}
 		
 		int j, pix_i, pix_j, pix_prev_i, pix_prev_j, pix_up_i, pix_up_j, pix_diag_i, pix_diag_j;
 		unsigned int prevR, prevG, prevB, prevA, diagR, diagG, diagB, diagA;
 		unsigned int upR, upG, upB, upA;
-		
-		
+		int condition;
+
+			
 		switch(filt_type)
 		{
 			case 0:
-				for(j = 2; j <= 2 + j_count - j_delta + 1; j+=j_delta)
-				{
-					if(interlace_method == 0)
-					{
-						pix_i = i;
-						pix_j = (j-2)/j_delta;
-					}
-					else
-					if(interlace_method == 1)
-					{
-						getCoordPixel(cur_small_img, cur_row, cur_col, pix_i, pix_j);
-					}
-
-					if(colour_type == 6)
-					{
-						alpha = getInt(v_scanlines[i][j+3]);
-					}
-
-					image->setPixel(pix_i, pix_j, getInt(v_scanlines[i][j]),
-						                		  getInt(v_scanlines[i][j+1]),
-						                		  getInt(v_scanlines[i][j+2]),
-						                		  alpha);	
-				}
+				doDeFilteringType0(j_count, j_delta, cur_small_img, cur_row, i, v_scanlines[i], image);
 				break;
 
 			case 1:
@@ -372,20 +337,22 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 				else
 				if(interlace_method == 1)
 				{
-					getCoordPixel(cur_small_img, cur_row, cur_col, pix_i, pix_j);
+					getCoordPixel(cur_small_img, cur_row, 0, pix_i, pix_j);
 				}
+
+				
 
 				if(colour_type == 6)
 				{
-					alpha = getInt(v_scanlines[i][5]);
+					alpha = getUnsignedInt(v_scanlines[i][5]);
 				}
-
-				image->setPixel(pix_i, pix_j, getInt(v_scanlines[i][2]),
-					                  		  getInt(v_scanlines[i][3]),
-					                 		  getInt(v_scanlines[i][4]),
+				
+				image->setPixel(pix_i, pix_j, getUnsignedInt(v_scanlines[i][2]),
+					                  		  getUnsignedInt(v_scanlines[i][3]),
+					                 		  getUnsignedInt(v_scanlines[i][4]),
 					                  		  alpha);
-					
 
+				cur_col = 1;
 				for(j = 1 + j_delta; j <= 2 + j_count - j_delta + 1; j+=j_delta)
 				{
 					if(interlace_method == 0)
@@ -405,14 +372,16 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 
 					if(colour_type == 6)
 					{
-						alpha = getIntSum(getInt(v_scanlines[i][j+4]), image->getPixel(pix_prev_i,pix_prev_j).getAlpha());
+						alpha = getIntSum(getUnsignedInt(v_scanlines[i][j+4]), image->getPixel(pix_prev_i,pix_prev_j).getAlpha());
 					}
 
 					image->setPixel(pix_i, pix_j,
-					                   getIntSum(getInt(v_scanlines[i][j+1]), image->getPixel(pix_prev_i,pix_prev_j).getRed()),
-					                   getIntSum(getInt(v_scanlines[i][j+2]), image->getPixel(pix_prev_i,pix_prev_j).getGreen()),
-					                   getIntSum(getInt(v_scanlines[i][j+3]), image->getPixel(pix_prev_i,pix_prev_j).getBlue()),
+					                   getIntSum(getUnsignedInt(v_scanlines[i][j+1]), image->getPixel(pix_prev_i,pix_prev_j).getRed()),
+					                   getIntSum(getUnsignedInt(v_scanlines[i][j+2]), image->getPixel(pix_prev_i,pix_prev_j).getGreen()),
+					                   getIntSum(getUnsignedInt(v_scanlines[i][j+3]), image->getPixel(pix_prev_i,pix_prev_j).getBlue()),
 					                   alpha);
+					
+					cur_col++;
 				}
 					
 				break;						
@@ -426,22 +395,32 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 				else
 				if(interlace_method == 1)
 				{
-					getCoordPixel(cur_small_img, cur_row, cur_col, pix_i, pix_j);
+					getCoordPixel(cur_small_img, cur_row, 0, pix_i, pix_j);
 				}
 
 				if(colour_type == 6)
 				{
-					alpha = getInt(v_scanlines[i][5]);
+					alpha = getUnsignedInt(v_scanlines[i][5]);
 				}
 
-				image->setPixel(pix_i, pix_j, getInt(v_scanlines[i][2]),
-					                  		  getInt(v_scanlines[i][3]),
-					                  		  getInt(v_scanlines[i][4]),
+				image->setPixel(pix_i, pix_j, getUnsignedInt(v_scanlines[i][2]),
+					                  		  getUnsignedInt(v_scanlines[i][3]),
+					                  		  getUnsignedInt(v_scanlines[i][4]),
 					                  		  alpha);
 
+				cur_col = 1;
 				for(j = 1 + j_delta; j <= 2 + j_count - j_delta + 1; j+=j_delta)
 				{
-					if(i == 0)
+					if(interlace_method == 0)
+					{
+						condition = i;
+					}
+					else
+					{
+						condition = cur_row;
+					}
+					
+					if(condition/*i*/ == 0)
 					{
 						if(interlace_method == 0)
 						{
@@ -456,13 +435,14 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 
 						if(colour_type == 6)
 						{
-							alpha = getInt(v_scanlines[i][j+4]);
+							alpha = getUnsignedInt(v_scanlines[i][j+4]);
 						}
 
-						image->setPixel(pix_i, pix_j, getInt(v_scanlines[i][j+1]),
-							                          getInt(v_scanlines[i][j+2]),
-							                          getInt(v_scanlines[i][j+3]),
+						image->setPixel(pix_i, pix_j, getUnsignedInt(v_scanlines[i][j+1]),
+							                          getUnsignedInt(v_scanlines[i][j+2]),
+							                          getUnsignedInt(v_scanlines[i][j+3]),
 							                          alpha);
+						
 					}
 					else
 					{
@@ -483,21 +463,30 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 
 						if(colour_type == 6)
 						{
-							alpha = getIntSum(getInt(v_scanlines[i][j+4]), image->getPixel(pix_up_i,pix_up_j).getBlue());
+							alpha = getIntSum(getUnsignedInt(v_scanlines[i][j+4]), image->getPixel(pix_up_i,pix_up_j).getBlue());
 						}
 
 						image->setPixel(pix_i, pix_j,
-						                   getIntSum(getInt(v_scanlines[i][j+1]), image->getPixel(pix_up_i,pix_up_j).getRed()),
-						                   getIntSum(getInt(v_scanlines[i][j+2]), image->getPixel(pix_up_i,pix_up_j).getGreen()),
-						                   getIntSum(getInt(v_scanlines[i][j+3]), image->getPixel(pix_up_i,pix_up_j).getBlue()),
+						                   getIntSum(getUnsignedInt(v_scanlines[i][j+1]), image->getPixel(pix_up_i,pix_up_j).getRed()),
+						                   getIntSum(getUnsignedInt(v_scanlines[i][j+2]), image->getPixel(pix_up_i,pix_up_j).getGreen()),
+						                   getIntSum(getUnsignedInt(v_scanlines[i][j+3]), image->getPixel(pix_up_i,pix_up_j).getBlue()),
 						                   alpha);
-					}					  							
+					}	
+					cur_col++;				  							
 				}
 				break;
 
 			case 3:				
+				if(interlace_method == 0)
+				{
+					condition = i;
+				}
+				else
+				{
+					condition = cur_row;
+				}
 
-				if(i == 0)
+				if(condition/*i*/ == 0)
 				{
 					upR = upG = upB = upA = 0;
 				}
@@ -514,7 +503,7 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 					else
 					if(interlace_method == 1)
 					{
-						getCoordPixel(cur_small_img, cur_row-1, cur_col, pix_up_i, pix_up_j);
+						getCoordPixel(cur_small_img, cur_row-1, 0, pix_up_i, pix_up_j);
 					}
 				
 					upR = image->getPixel(pix_up_i,pix_up_j).getRed();
@@ -525,17 +514,27 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 
 				if(colour_type == 6)
 				{
-					alpha = getInt(v_scanlines[i][5]);
+					alpha = getUnsignedInt(v_scanlines[i][5]);
 				}
 
-				image->setPixel(pix_i, pix_j, getIntSum(getInt(v_scanlines[i][2]), upR/2),
-					                  		  getIntSum(getInt(v_scanlines[i][3]), upG/2),
-					                  		  getIntSum(getInt(v_scanlines[i][4]), upB/2),
+				image->setPixel(pix_i, pix_j, getIntSum(getUnsignedInt(v_scanlines[i][2]), upR/2),
+					                  		  getIntSum(getUnsignedInt(v_scanlines[i][3]), upG/2),
+					                  		  getIntSum(getUnsignedInt(v_scanlines[i][4]), upB/2),
 					                  		  getIntSum(alpha, upA/2));
 
+				cur_col = 1;
 				for(j = 1 + j_delta; j <= 2 + j_count - j_delta + 1; j+=j_delta)
 				{
-					if(i == 0)
+					if(interlace_method == 0)
+					{
+						condition = i;
+					}
+					else
+					{
+						condition = cur_row;
+					}
+
+					if(condition/*i*/ == 0)
 					{
 						upR = upG = upB = upA = 0;
 					}
@@ -575,20 +574,29 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 
 					if(colour_type == 6)
 					{
-						alpha = getIntSum(getInt(v_scanlines[i][j+4]), (upA + image->getPixel(pix_prev_i, pix_prev_j).getAlpha()));
+						alpha = getIntSum(getUnsignedInt(v_scanlines[i][j+4]), (upA + image->getPixel(pix_prev_i, pix_prev_j).getAlpha()));
 					}
 
-					image->setPixel(pix_i, pix_j, getIntSum(getInt(v_scanlines[i][j+1]), (upR + image->getPixel(pix_prev_i, pix_prev_j).getRed())/2),
-					                 	  getIntSum(getInt(v_scanlines[i][j+2]), (upG + image->getPixel(pix_prev_i, pix_prev_j).getGreen())/2),
-					                  	  getIntSum(getInt(v_scanlines[i][j+3]), (upB + image->getPixel(pix_prev_i, pix_prev_j).getBlue())/2),
+					image->setPixel(pix_i, pix_j, getIntSum(getUnsignedInt(v_scanlines[i][j+1]), (upR + image->getPixel(pix_prev_i, pix_prev_j).getRed())/2),
+					                 	  getIntSum(getUnsignedInt(v_scanlines[i][j+2]), (upG + image->getPixel(pix_prev_i, pix_prev_j).getGreen())/2),
+					                  	  getIntSum(getUnsignedInt(v_scanlines[i][j+3]), (upB + image->getPixel(pix_prev_i, pix_prev_j).getBlue())/2),
 					                  	  alpha);
+					cur_col++;
 				}
 				
 				break;
 
-			case 4:				
+			case 4:	
+				if(interlace_method == 0)
+				{
+					condition = i;
+				}			
+				else
+				{
+					condition = cur_row;
+				}
 
-				if(i == 0)
+				if(condition/*i*/ == 0)
 				{
 					upR = upG = upB = upA = 0;					
 				}
@@ -602,7 +610,7 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 					else
 					if(interlace_method == 1)
 					{
-						getCoordPixel(cur_small_img, cur_row-1, cur_col, pix_up_i, pix_up_j);
+						getCoordPixel(cur_small_img, cur_row-1, 0, pix_up_i, pix_up_j);
 					}
 
 					upR = image->getPixel(pix_up_i, pix_up_j).getRed();
@@ -628,14 +636,15 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 
 				if(colour_type == 6)
 				{
-					alpha = getIntSum(getInt(v_scanlines[i][5]), getPaethPredictor(prevA, upA, diagA));
+					alpha = getIntSum(getUnsignedInt(v_scanlines[i][5]), getPaethPredictor(prevA, upA, diagA));
 				}
 
-				image->setPixel(pix_i, pix_j, getIntSum(getInt(v_scanlines[i][2]), getPaethPredictor(prevR, upR, diagR)),
-					                  getIntSum(getInt(v_scanlines[i][3]), getPaethPredictor(prevG, upG, diagG)),
-					                  getIntSum(getInt(v_scanlines[i][4]), getPaethPredictor(prevB, upB, diagB)),
+				image->setPixel(pix_i, pix_j, getIntSum(getUnsignedInt(v_scanlines[i][2]), getPaethPredictor(prevR, upR, diagR)),
+					                  getIntSum(getUnsignedInt(v_scanlines[i][3]), getPaethPredictor(prevG, upG, diagG)),
+					                  getIntSum(getUnsignedInt(v_scanlines[i][4]), getPaethPredictor(prevB, upB, diagB)),
 					                  alpha);
 
+				cur_col = 1;
 				for(j = 1 + j_delta; j <= 2 + j_count - j_delta + 1; j+=j_delta)
 				{
 					if(interlace_method == 0)
@@ -646,7 +655,16 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 						pix_prev_i = i;
 						pix_prev_j = (j-1)/j_delta - 1;
 
-						if(i > 0)
+						if(interlace_method == 0)
+						{
+							condition = i;
+						}
+						else
+						{
+							condition = cur_row;
+						}
+
+						if(condition/*i*/ > 0)
 						{
 							pix_up_i = i-1;
 							pix_up_j = (j-1)/j_delta;
@@ -661,7 +679,16 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 						getCoordPixel(cur_small_img, cur_row, cur_col, pix_i, pix_j);
 						getCoordPixel(cur_small_img, cur_row, cur_col-1, pix_prev_i, pix_prev_j);
 
-						if(i > 0)
+						if(interlace_method == 0)
+						{
+							condition = i;
+						}
+						else
+						{
+							condition = cur_row;
+						}
+
+						if(condition/*i*/ > 0)
 						{
 							getCoordPixel(cur_small_img, cur_row-1, cur_col, pix_up_i, pix_up_j);
 							getCoordPixel(cur_small_img, cur_row-1, cur_col-1, pix_diag_i, pix_diag_j);
@@ -678,8 +705,17 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 					}
 
 					upR = upG = upB = upA = diagR = diagG = diagB = diagA = 0;
+
+					if(interlace_method == 0)
+					{
+						condition = i;
+					}
+					else
+					{
+						condition = cur_row;
+					}
 					
-					if(i > 0)
+					if(condition/*i*/ > 0)
 					{
 						upR = image->getPixel(pix_up_i, pix_up_j).getRed();
 						upG = image->getPixel(pix_up_i, pix_up_j).getGreen();
@@ -698,19 +734,20 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 
 					if(colour_type == 6)
 					{
-						alpha = getIntSum(getInt(v_scanlines[i][j+4]), getPaethPredictor(prevA, upA, diagA));
+						alpha = getIntSum(getUnsignedInt(v_scanlines[i][j+4]), getPaethPredictor(prevA, upA, diagA));
 					}
 
-					image->setPixel(pix_i, pix_j, getIntSum(getInt(v_scanlines[i][j+1]),
+					image->setPixel(pix_i, pix_j, getIntSum(getUnsignedInt(v_scanlines[i][j+1]),
 									     		  		    getPaethPredictor(prevR, upR, diagR)
 												           ),
-					                 	          getIntSum(getInt(v_scanlines[i][j+2]),
+					                 	          getIntSum(getUnsignedInt(v_scanlines[i][j+2]),
 					                 	                    getPaethPredictor(prevG, upG, diagG)
 					                 	                   ),
-					                  	  		  getIntSum(getInt(v_scanlines[i][j+3]),
+					                  	  		  getIntSum(getUnsignedInt(v_scanlines[i][j+3]),
 					                  	  		            getPaethPredictor(prevB, upB, diagB)
 					                  	  		           ),
 					                  	          alpha);
+					cur_col++;
 				}
 
 					
@@ -741,11 +778,11 @@ void PNGReader::getScanLines(V_ScanLines &v_scanlines, char *decompr_data, int d
 		{
 			ScanLine scanline;
 			scanline.push_back(0);
-			scanline.push_back(decompr_data[i*scan_size]); // put filt type
+			scanline.push_back(getUnsignedInt(decompr_data[i*scan_size])); // put filt type
 
 			for(int j = 1; j < scan_size; j++)
 			{
-				scanline.push_back(getInt(decompr_data[i*scan_size + j]));	
+				scanline.push_back(getUnsignedInt(decompr_data[i*scan_size + j]));	
 			}
 
 			v_scanlines.push_back(scanline);
@@ -763,47 +800,81 @@ void PNGReader::getScanLines(V_ScanLines &v_scanlines, char *decompr_data, int d
 			for(int s = 1; s <= 7; s++)
 			{	
 				getSizeSmallImage(s, col, row);
-
+				
 				for(int i = 0; i < row; i++)
 				{
 					scanline.clear();
 					scanline.push_back(s);
 
-					scanline.push_back(getInt(decompr_data[n])); // put filt type
+					scanline.push_back(getUnsignedInt(decompr_data[n])); // put filt type
 
-					for(int j = 1; j < col; j++)
+					for(int j = 1; j <= col; j++)
 					{
 						if(colour_type == 2)
 						{
-							scanline.push_back(getInt(decompr_data[n+1]));
-							scanline.push_back(getInt(decompr_data[n+2]));
-							scanline.push_back(getInt(decompr_data[n+3]));
+							scanline.push_back(getUnsignedInt(decompr_data[n+1]));
+							scanline.push_back(getUnsignedInt(decompr_data[n+2]));
+							scanline.push_back(getUnsignedInt(decompr_data[n+3]));
 
-							n += 3*col+1;
+							n += 3;
 						}
 						else
 						if(colour_type == 6)
 						{
-							scanline.push_back(getInt(decompr_data[n+1]));
-							scanline.push_back(getInt(decompr_data[n+2]));
-							scanline.push_back(getInt(decompr_data[n+3]));
-							scanline.push_back(getInt(decompr_data[n+4]));
+							scanline.push_back(getUnsignedInt(decompr_data[n+1]));
+							scanline.push_back(getUnsignedInt(decompr_data[n+2]));
+							scanline.push_back(getUnsignedInt(decompr_data[n+3]));
+							scanline.push_back(getUnsignedInt(decompr_data[n+4]));
 
-							n += 4*col+1;
+							n += 4;							
 						}
 					}
+					n++;
 
-					v_scanlines.push_back(scanline);
-
-					
+					v_scanlines.push_back(scanline);					
 				}
 			}
 			
 		}
+
 	}
 
 }
 
+
+int PNGReader::getDecomprDataLen()
+{
+	int res = 0;
+		
+	int count;
+	if(colour_type == 2)
+	{
+		count = 3;
+	}
+	else
+	if(colour_type ==6)
+	{
+		count = 4;
+	}
+
+	if(interlace_method == 0)
+	{
+		res = (count*img_width + 1)*img_height;	
+	}
+	else
+	if(interlace_method == 1)
+	{
+		int row, col;
+
+		for(int s = 1; s <=7; s++)
+		{
+			getSizeSmallImage(s, col, row);
+			res += row + count*col*row;
+		}
+	}
+
+	return res;
+}
 
 
 Image* PNGReader::getImageStruct()
@@ -812,15 +883,15 @@ Image* PNGReader::getImageStruct()
 	char *compr_data = getPNGData(compr_data_len);
 	
 	MyDecompressor decopressor = MyDecompressor();
-	unsigned int decompr_data_len = 0;
+	unsigned int decompr_data_len = getDecomprDataLen();
+	
 	char *decompr_data = decopressor.getDecomprData(decompr_data_len, compr_data, compr_data_len);
-
-	cout<<"decompr_data_len = "<<decompr_data_len<<endl;
 
 	//for(int i = (103*3+1)*0; i < (103*3+1)*1; i++)
 	{
-		//cout<<"d["<<350*4+2<<"] = "<<getInt(decompr_data[350*4+2])<<"  ";
+		//cout<<"d["<<350*4+2<<"] = "<<getUnsignedInt(decompr_data[350*4+2])<<"  ";
 	}
+
 
 	Image *image = new Image(img_width, img_height, colour_type);
 

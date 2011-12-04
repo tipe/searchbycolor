@@ -4,6 +4,8 @@
 #include <string.h>
 #include <string>
 #include <stdexcept>
+#include <dirent.h>
+
 
 #include "PNGReader.h"
 #include "BMPReader.h"
@@ -11,24 +13,50 @@
 using namespace std;
 
 
-void getImageColors(Image *image, int divider, float ***result)
+float*** getThreeDimensionalMatrix(int size)
 {
-	int R, G, B;
-
-	result = new float**[divider];
-	for(int i = 0; i < divider; i++)
+	float ***result;
+	result = new float**[size];
+	for(int i = 0; i < size; i++)
 	{
-		result[i] = new float*[divider];
+		result[i] = new float*[size];
 	}
-	for(int i = 0; i < divider; i++)
+	for(int i = 0; i < size; i++)
 	{
-		for(int j = 0; j < divider; j++)
+		for(int j = 0; j < size; j++)
 		{
-			result[i][j] = new float[divider];
+			result[i][j] = new float[size];
 		}
 	}
 
+	return result;
+}
 
+void deleteThreeDimensionalMatrix(float ***result, int size)
+{
+	if(result != NULL)
+	{
+		for(int i = 0; i < size; i++) 
+		{
+			for(int j = 0; j < size; j++) 
+			{
+				delete [] result[i][j];
+			}
+		}
+
+		for(int i = 0; i < size; i++)
+		{
+			delete[] result[i];
+		}
+
+		delete[] result;
+	}	
+}
+
+
+
+void getImageColors(Image *image, int divider, float ***result)
+{
 	for(int i = 0; i < divider; i++)
 	{
 		for(int j = 0; j < divider; j++)
@@ -39,32 +67,19 @@ void getImageColors(Image *image, int divider, float ***result)
 			}
 		}		
 	}
-
 	
-	int border = 256/divider;
+	int border = 255/divider + 1;
 
 	for(int i = 0; i < image->getHeight(); i++)
 	{
 		for(int j = 0; j < image->getWidth(); j++)
 		{
-			R = image->getPixel(i,j).getRed();
-			G = image->getPixel(i,j).getGreen();
-			B = image->getPixel(i,j).getBlue();
+			int ii = image->getPixel(i,j).getRed()/border;
+			int jj = image->getPixel(i,j).getGreen()/border;
+			int kk = image->getPixel(i,j).getBlue()/border;
 
-			for(int i = 0; i < divider; i++) // red
-			{
-				for(int j = 0; j < divider; j++) // green
-				{
-					for(int k = 0; k < divider; k++) // blue
-					{
-						if(R >= i*border && R < (i+1)*border &&
-						   G >= j*border && G < (j+1)*border &&
-						   B >= k*border && B < (k+1)*border)
-
-						result[i][j][k]++;
-					}
-				}
-			}
+			result[ii][jj][kk]++;
+					
 		}
 	}
 
@@ -84,30 +99,24 @@ void getImageColors(Image *image, int divider, float ***result)
 }
 
 
-bool isColorBasic(Image *image, unsigned int r, unsigned int g, unsigned int b, unsigned int range, int &percent)
+float isColorBasic(Image *image, unsigned int r, unsigned int g, unsigned int b, unsigned int range)
 {
 	int count = 0;
-
+	
 	for(int i = 0; i < image->getHeight(); i++)
 	{
 		for(int j = 0; j < image->getWidth(); j++)
 		{
-			if( pow(image->getPixel(i,j).getRed() - r, 2) +
-			    pow(image->getPixel(i,j).getGreen() - g, 2) +
-			    pow(image->getPixel(i,j).getBlue() - b, 2) <= pow(range, 2))
+			if( pow(abs(image->getPixel(i,j).getRed() - r), 2) +
+			    pow(abs(image->getPixel(i,j).getGreen() - g), 2) +
+			    pow(abs(image->getPixel(i,j).getBlue() - b), 2) <= pow(range, 2))
 			{
-				count++;
+				count++;				
 			}
 		}
 	}
 
-	percent = 100*count/(image->getHeight()*image->getWidth());
-
-	if(percent >= 30)
-	{
-		return 1;
-	}
-	return 0;
+	return 100*(float)count/(float)(image->getHeight()*image->getWidth());
 }
 
 
@@ -118,61 +127,101 @@ int main(int argc, char *argv[])
 		throw runtime_error("Please enter name of PNG file");
 	}
 
-	PNGReader reader(argv[1]);
+	DIR *dir = opendir(argv[1]);
 
-	//BMPReader reader(argv[1]);
+	if(dir == NULL)
+	{
+		throw runtime_error("Can not open dir");
+	}
+
+	struct dirent *entry;
+
+	int red = 50;
+	int green = 100;
+	int blue = 250;
+	int range = 100;
+
+	while ((entry = readdir(dir)) != NULL)
+    {
+    	if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
+    	{
+    		string expansion = (strrchr(entry->d_name, '.'));
+
+    		string file_name = argv[1];
+    		file_name += "/";
+    		file_name += entry->d_name;
+
+    		Image *image;
+
+    		if(expansion == ".png")
+    		{
+    			//cout<<"png"<<endl;
+    			//cout<<"file = "<<file_name<<endl;
+    			PNGReader reader(file_name);
+
+    			image = reader.getImageStruct();    			
+    		}
+    		else
+    		if(expansion == ".bmp")
+    		{
+    			//cout<<"bmp"<<endl;
+    			//cout<<"file = "<<file_name<<endl;
+    			BMPReader reader(file_name);
+
+    			image = reader.getImageStruct();
+    		}
+
+    		float percent = isColorBasic(image, red, green, blue, range);
+    		//cout<<"percent = "<<percent<<" file = "<<file_name<<endl;
+    		
+    		if(percent >= 5.0)
+    		{
+    			cout<<file_name<<endl;
+    		}
+    		
+    		delete image;
+    	}        
+    }
+    closedir(dir);
+
+
+
 	
-	Image *image = reader.getImageStruct();
-	//cout<<"!!! img height = "<<image->getHeight()<<" img width = "<<image->getWidth()<<endl;
+	
+	// 
+	// //cout<<"!!! img height = "<<image->getHeight()<<" img width = "<<image->getWidth()<<endl;
 
-	// //for(int i = 0; i < image->getHeight(); i++)
+	// // //for(int i = 0; i < image->getHeight(); i++)
+	// // {
+	// 	for(int j = 0; j < image->getWidth(); j++)
+	// 	{
+	// 		cout<<j<<":("<<image->getPixel(3,j).getRed()<<","<<image->getPixel(3,j).getGreen()<<
+	// 		          ","<<image->getPixel(3,j).getBlue()<<","<<image->getPixel(3,j).getAlpha()<<")  ";
+	// 	}
+	// 	cout<<endl;
+	// // }
+
+	// int percent = 0;
+	// // bool res = isColorBasic(image, 255, 0, 0, 0, percent);
+	// // cout<<"percent = "<<percent<<" is basic = "<<res<<endl;
+
+	// // float ***result;
+	// int divider = 8;
+	// // 
+	
+	// // getImageColors(image, divider, result);
+
+	// for(int i = 0; i < divider; i++) // red
 	// {
-		for(int j = 0; j < image->getWidth(); j++)
-		{
-			//cout<<j<<":("<<image->getPixel(0,j).getRed()<<","<<image->getPixel(0,j).getGreen()<<
-			  //        ","<<image->getPixel(0,j).getBlue()<<","<<image->getPixel(0,j).getAlpha()<<")  ";
-		}
+	// 	for(int j = 0; j < divider; j++) // green
+	// 	{
+	// 		for(int k = 0; k < divider; k++) // blue
+	// 		{
+	// 			//cout<<result[i][j][k]<<" ";
+	// 		}
+	// 	}
 	// }
-
-	int percent = 0;
-	bool res = isColorBasic(image, 255, 0, 0, 0, percent);
-	cout<<"percent = "<<percent<<" is basic = "<<res<<endl;
-
-	float ***result;
-	int divider = 10;
-	getImageColors(image, divider, result);
-
-	for(int i = 0; i < divider; i++) // red
-	{
-		for(int j = 0; j < divider; j++) // green
-		{
-			for(int k = 0; k < divider; k++) // blue
-			{
-				//cout<<result[i][j][k]<<" ";
-			}
-		}
-	}
 	
-
-	for(int i = 0; i < divider; i++) 
-	{
-		for(int j = 0; j < divider; j++) 
-		{
-			//delete [] result[i][j];????
-		}
-	}
-
-	for(int i = 0; i < divider; i++) 
-	{
-		//delete[] result[i];????
-	}
-
-	//delete[] result;???
-
-
-
-	//delete image;
-
 
 
 	return 0;

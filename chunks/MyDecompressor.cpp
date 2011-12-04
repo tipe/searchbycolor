@@ -20,7 +20,7 @@ char* MyDecompressor::getDecomprData(unsigned int &decompr_data_length, char *co
 	if(compr_data_length > 0)
 	{
 		char *decompr_data = new char[decompr_data_length];
- 		
+		
 		if(uncompress((Bytef*)decompr_data, (uLong*)&decompr_data_length, (const Bytef*)compr_data, (uLong)compr_data_length) == 0)
 		{
 			return decompr_data;

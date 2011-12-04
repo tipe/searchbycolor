@@ -1,15 +1,18 @@
 all: chunks
 
-chunks: chunks.o PNGReader.o BMPReader.o MyDecompressor.o Image.o
-	g++ chunks.o PNGReader.o BMPReader.o MyDecompressor.o Image.o  -lz -o chunks
+chunks: chunks.o PNGReader.o BMPReader.o MyDecompressor.o ImageReader.o Image.o
+	g++ chunks.o PNGReader.o BMPReader.o MyDecompressor.o ImageReader.o Image.o  -lz -o chunks
 
-chunks.o: chunks.cpp PNGReader.h 
+chunks.o: chunks.cpp PNGReader.h BMPReader.h
 	g++ -c chunks.cpp -Wall -o chunks.o
 
-PNGReader.o: PNGReader.cpp PNGReader.h MyDecompressor.h 
+ImageReader.o: ImageReader.h
+	g++ -c ImageReader.cpp -Wall -o ImageReader.o
+
+PNGReader.o: PNGReader.cpp PNGReader.h MyDecompressor.h ImageReader.h
 	g++ -c PNGReader.cpp -Wall -o PNGReader.o
 
-BMPReader.o: BMPReader.cpp BMPReader.h
+BMPReader.o: BMPReader.cpp BMPReader.h ImageReader.h
 	g++ -c BMPReader.cpp -Wall -o BMPReader.o
 
 MyDecompressor.o: MyDecompressor.cpp MyDecompressor.h

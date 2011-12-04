@@ -9,7 +9,7 @@
 #include <string>
 
 #include "MyDecompressor.h"
-#include "Image.h"
+#include "ImageReader.h"
 
 using namespace std;
 
@@ -21,15 +21,9 @@ typedef vector<unsigned int> ScanLine;
 typedef vector<ScanLine> V_ScanLines;
 
 
-class PNGReader
+class PNGReader : public ImageReader
 {
 private:
-	ifstream file;
-	string file_name;
-
-	int img_width;
-	int img_height;
-
 	int bit_depth; 	
 	int colour_type; 	
 	int compr_method; 	
@@ -56,9 +50,11 @@ private:
 
 	unsigned int getPaethPredictor(unsigned int prev, unsigned int up, unsigned int diag);
 
+	int getIntInRightOrder(char *buf);
+	unsigned int readInt();
+
 public:
-	PNGReader(char *file_name);
-	
+	PNGReader(string file_name);	
 	Image* getImageStruct();
 };
 

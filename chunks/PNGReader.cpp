@@ -5,18 +5,67 @@
 #include <stdexcept>
 
 
+int PNGReader::getIntInRightOrder(char *buf)
+{
+	int result = 0;
+	if(!is_bigendian())
+	{
+		int tmp = 0;
+		for(int i = 3; i >= 0; i--)
+		{
+			if(buf[i] < 0)
+			{
+				tmp = 256 + buf[i];
+			}
+			else
+			{
+				tmp = buf[i];
+			}
+			result += tmp*pow(256, 3-i);
+		}
+	}
+	else
+	{
+		int tmp = 0;
+		for(int i = 0; i < 4; i++)
+		{
+			if(buf[i] < 0)
+			{
+				tmp = 256 + buf[i];
+			}
+			else
+			{
+				tmp = buf[i];
+			}
+			result += tmp*pow(256, i);
+		}
+	}
+	return result;
+}
 
+unsigned int PNGReader::readInt()
+{
+	char buf[] = "0000";
+	
+	file.read(buf, 4);
+	if(file.gcount() != 4)
+	{
+		throw runtime_error("111 File not read");
+	}
+
+	return getIntInRightOrder(buf);
+}
 
 
 void PNGReader::getIHDRData()
 {
-	img_width        = readInt(file);
-	img_height       = readInt(file);
-	bit_depth        = readByte(file);
-	colour_type      = readByte(file);
-	compr_method     = readByte(file);
-	filter_method    = readByte(file);
-	interlace_method = readByte(file);
+	img_width        = readInt();
+	img_height       = readInt();
+	bit_depth        = readByte();
+	colour_type      = readByte();
+	compr_method     = readByte();
+	filter_method    = readByte();
+	interlace_method = readByte();
 }
 
 
@@ -25,9 +74,10 @@ char* PNGReader::getIDATData(unsigned int &data_length)
 	char *idat_tmp_data = new char[data_length];
 
 	file.read(idat_tmp_data, data_length);
-	if(file.gcount() != (int)data_length)
+	int count = file.gcount();
+	if(count != (int)data_length)
 	{
-		throw runtime_error("PNG file not read");
+		throw runtime_error("123 PNG file not read");
 	}
 	
 	return idat_tmp_data;
@@ -77,8 +127,8 @@ void PNGReader::doInitData()
 			{
 				v_idat_total_data.push_back(idat_tmp_buf[i]);
 			}
-			file.seekg(4, ios::cur);	
-
+			file.seekg(4, ios::cur);
+			
 			delete[] idat_tmp_buf;
 		}
 		else
@@ -94,10 +144,10 @@ void PNGReader::doInitData()
 }
 
 
-PNGReader::PNGReader(char *file_name)
+PNGReader::PNGReader(string file_name)
 {
 	this->file_name = file_name;
-	file.open(file_name, fstream::binary);
+	file.open(file_name.c_str(), fstream::binary);
 	if(file.good() != true)
 	{
 		throw runtime_error("PNG file not open");
@@ -268,8 +318,6 @@ void PNGReader::doDeFilteringType0(int j_count, int j_delta, int cur_small_img, 
 		{
 			alpha = getUnsignedInt(scanline[j+3]);
 		}
-
-
 		
 		image->setPixel(pix_i, pix_j, getUnsignedInt(scanline[j]),
 			                		  getUnsignedInt(scanline[j+1]),
@@ -749,12 +797,10 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 					                  	          alpha);
 					cur_col++;
 				}
-
 					
 				break;
 		}
 	}
-
 }
 
 
@@ -786,7 +832,6 @@ void PNGReader::getScanLines(V_ScanLines &v_scanlines, char *decompr_data, int d
 			}
 
 			v_scanlines.push_back(scanline);
-
 		}
 	}
 	else
@@ -833,12 +878,9 @@ void PNGReader::getScanLines(V_ScanLines &v_scanlines, char *decompr_data, int d
 
 					v_scanlines.push_back(scanline);					
 				}
-			}
-			
+			}			
 		}
-
 	}
-
 }
 
 
@@ -881,7 +923,7 @@ Image* PNGReader::getImageStruct()
 {
 	unsigned int compr_data_len = 0;
 	char *compr_data = getPNGData(compr_data_len);
-	
+
 	MyDecompressor decopressor = MyDecompressor();
 	unsigned int decompr_data_len = getDecomprDataLen();
 	
@@ -892,15 +934,16 @@ Image* PNGReader::getImageStruct()
 		//cout<<"d["<<350*4+2<<"] = "<<getUnsignedInt(decompr_data[350*4+2])<<"  ";
 	}
 
-
-	Image *image = new Image(img_width, img_height, colour_type);
-
+	
 	V_ScanLines v_scanlines;
 	getScanLines(v_scanlines, decompr_data, decompr_data_len);
 
 	delete decompr_data;
 
+
+	Image *image = new Image(img_width, img_height, colour_type);
 	doDeFiltering(v_scanlines, image);
+
 
 	return image;
 }

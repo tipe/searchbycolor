@@ -9,16 +9,6 @@
 using namespace std;
 
 
-bool is_bigendian();
-int getIntInRightOrder(char *buf);
-unsigned int getUnsignedInt(char buf);
-unsigned int getIntSum(unsigned int i1, unsigned int i2, unsigned int i3=0);
-unsigned int readInt(ifstream &file);
-unsigned int readByte(ifstream &file);
-unsigned int readTwoBytes(ifstream &file);
-
-
-
 class Pixel
 {
 private:

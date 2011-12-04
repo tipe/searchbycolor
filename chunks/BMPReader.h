@@ -5,20 +5,15 @@
 #include <fstream>
 #include <string>
 
-#include "Image.h"
+#include "ImageReader.h"
+
 
 using namespace std;
 
 
-class BMPReader
+class BMPReader : public ImageReader
 {
 private:
-	ifstream file;
-	string file_name;
-
-	int img_width;
-	int img_height;
-
 	int dib_header_size;
 	int bits_per_pixel;
 
@@ -32,9 +27,11 @@ private:
 
 	
 	void setImageColors(Image *image);
+	int getIntInRightOrder(char *buf);
+	unsigned int readInt();
 
 public:
-	BMPReader(char *file_name);
+	BMPReader(string file_name);
 	Image* getImageStruct();
 };
 

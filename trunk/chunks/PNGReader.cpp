@@ -941,7 +941,7 @@ Image* PNGReader::getImageStruct()
 	delete decompr_data;
 
 
-	Image *image = new Image(img_width, img_height, colour_type);
+	Image *image = new Image(img_width, img_height);
 	doDeFiltering(v_scanlines, image);
 
 

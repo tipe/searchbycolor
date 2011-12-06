@@ -1,12 +1,12 @@
 #include "Image.h"
 
 
-Pixel::Pixel(unsigned int r, unsigned int g, unsigned int b, unsigned int alpha)
+Pixel::Pixel(unsigned int R, unsigned int G, unsigned int B, unsigned int A)
 {
-	this->r = r;
-	this->g = g;
-	this->b = b;
-	this->alpha = alpha;
+	this->R = R;
+	this->G = G;
+	this->B = B;
+	this->A = A;
 }
 
 Pixel::Pixel()
@@ -14,36 +14,36 @@ Pixel::Pixel()
 	Pixel(0,0,0,0);
 }
 
-void Pixel::setColor(unsigned int r, unsigned int g, unsigned int b, unsigned int alpha)
+void Pixel::setColor(unsigned int R, unsigned int G, unsigned int B, unsigned int A)
 {
-	this->r = r;
-	this->g = g;
-	this->b = b;
-	this->alpha = alpha;
+	this->R = R;
+	this->G = G;
+	this->B = B;
+	this->A = A;
 }
 
 unsigned int Pixel::getRed()
 {
-	return r;
+	return R;
 }
 
 unsigned int Pixel::getGreen()
 {
-	return g;
+	return G;
 }
 
 unsigned int Pixel::getBlue()
 {
-	return b;
+	return B;
 }
 
 unsigned int Pixel::getAlpha()
 {
-	return alpha;
+	return A;
 }
 
 
-Image::Image(int width, int height, int color_type)
+Image::Image(int width, int height)
 {
 	this->width = width;
 	this->height = height;
@@ -53,8 +53,6 @@ Image::Image(int width, int height, int color_type)
 	{
 		pixels[i] = new Pixel[width];
 	}
-
-	this->color_type = color_type;
 }
 
 Image::~Image()
@@ -79,9 +77,9 @@ int Image::getHeight()
 	return height;
 }
 
-void Image::setPixel(int i, int j, unsigned int r, unsigned int g, unsigned int b, unsigned int alpha)
+void Image::setPixel(int i, int j, unsigned int R, unsigned int G, unsigned int B, unsigned int A)
 {
-	pixels[i][j].setColor(r, g, b, alpha);
+	pixels[i][j].setColor(R, G, B, A);	
 }
 
 Pixel Image::getPixel(int i, int j)

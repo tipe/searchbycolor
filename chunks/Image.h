@@ -5,24 +5,33 @@
 #include <fstream>
 #include <math.h>
 #include <stdexcept>
+#include "Image.h"
 
 using namespace std;
+
+#define BIT1  1
+#define BIT2  21
+#define BIT4  4
+#define BIT8  8
+#define BIT16 16
+#define BIT24 2
+#define BIT32 6
 
 
 class Pixel
 {
 private:
-	unsigned int r;	
-	unsigned int g;
-	unsigned int b;
+	unsigned int R;	
+	unsigned int G;
+	unsigned int B;
 
-	unsigned int alpha;
+	unsigned int A;
 
 public:
 
-	Pixel(unsigned int r, unsigned int g, unsigned int b, unsigned int alpha);
+	Pixel(unsigned int R, unsigned int G, unsigned int B, unsigned int A=0);
 	Pixel();
-	void setColor(unsigned int r, unsigned int g, unsigned int b, unsigned int alpha);
+	void setColor(unsigned int R, unsigned int G, unsigned int B, unsigned int A=0);
 	unsigned int getRed();
 	unsigned int getGreen();
 	unsigned int getBlue();
@@ -37,17 +46,15 @@ private:
 	int width;
 	int height;
 	
-	int color_type;
-	
 	Pixel **pixels;
 
 public:	
-	Image(int width, int height, int color_type);	
+	Image(int width, int height);	
 	~Image();
 
 	int getWidth();
 	int getHeight();
-	void setPixel(int i, int j, unsigned int r, unsigned int g, unsigned int b, unsigned int alpha=0);
+	void setPixel(int i, int j, unsigned int R, unsigned int G, unsigned int B, unsigned int A=0);
 	Pixel getPixel(int i, int j);
 };
 

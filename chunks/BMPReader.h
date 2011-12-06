@@ -25,6 +25,8 @@ private:
 	int blue_channel;
 	int alpha_channel;
 
+	Pixel *color_table;
+
 	
 	void setImageColors(Image *image);
 	int getIntInRightOrder(char *buf);

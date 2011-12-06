@@ -53,11 +53,128 @@ unsigned int BMPReader::readInt()
 
 void BMPReader::setImageColors(Image *image)
 {
-	int blue, green, red, alpha = 0;
+	int B, G, R, A, index;
 
 	switch(bits_per_pixel)
 	{
 		case 1:
+			for(int i = 0; i < img_height; i+=8)//???????
+			{
+				for(int j = 0; j < img_width; j+=8)
+				{
+					char buf[] = "00000000";
+					file.read(buf, 1);
+
+					for(int k = 0; k < 8; k++)
+					{
+						index = (int)buf[k];
+
+						R = color_table[index].getRed();
+						G = color_table[index].getGreen();
+						B = color_table[index].getBlue();
+						A = color_table[index].getAlpha();
+
+						image->setPixel(img_height - 1 - i, j, R, G, B, A);
+					}
+					
+				}
+
+				file.seekg(3, ios::cur);//????????????
+			}
+
+			break;
+
+		case 2:
+			for(int i = 0; i < img_height; i+=4)//???????
+			{
+				for(int j = 0; j < img_width; j+=4)
+				{
+					char buf[] = "00000000";
+					file.read(buf, 1);
+
+					for(int k = 0; k < 8; k+=2)
+					{
+						index = 2*(int)buf[k] + (int)buf[k+1];
+
+						R = color_table[index].getRed();
+						G = color_table[index].getGreen();
+						B = color_table[index].getBlue();
+						A = color_table[index].getAlpha();
+
+						image->setPixel(img_height - 1 - i, j, R, G, B, A);
+					}
+					
+				}
+
+				file.seekg(3, ios::cur);//????????????
+			}
+
+			break;
+
+		case 4:
+			for(int i = 0; i < img_height; i+=2)//???????
+			{
+				for(int j = 0; j < img_width; j+=2)
+				{
+					char buf[] = "00000000";
+					file.read(buf, 1);
+
+					for(int k = 0; k < 8; k+=4)
+					{
+						index = 8*(int)buf[k] + 4*(int)buf[k+1] + 2*(int)buf[k+2] + (int)buf[k+3];
+
+						R = color_table[index].getRed();
+						G = color_table[index].getGreen();
+						B = color_table[index].getBlue();
+						A = color_table[index].getAlpha();
+
+						image->setPixel(img_height - 1 - i, j, R, G, B, A);
+					}
+					
+				}
+
+				file.seekg(3, ios::cur);//????????????
+			}
+
+			break;
+
+		case 8:
+			for(int i = 0; i < img_height; i++)//???????
+			{
+				for(int j = 0; j < img_width; j++)
+				{
+					index = readByte();
+
+					R = color_table[index].getRed();
+					G = color_table[index].getGreen();
+					B = color_table[index].getBlue();
+					A = color_table[index].getAlpha();
+
+					image->setPixel(img_height - 1 - i, j, R, G, B, A);
+				}
+
+				file.seekg(3, ios::cur);//????????????
+			}
+
+			break;
+
+		case 16:
+			for(int i = 0; i < img_height; i++)//???????
+			{
+				for(int j = 0; j < img_width; j++)
+				{
+					index = readTwoBytes();
+
+					R = color_table[index].getRed();
+					G = color_table[index].getGreen();
+					B = color_table[index].getBlue();
+					A = color_table[index].getAlpha();
+
+					image->setPixel(img_height - 1 - i, j, R, G, B, A);
+				}
+
+				file.seekg(3, ios::cur);//????????????
+			}
 
 			break;
 
@@ -68,11 +185,11 @@ void BMPReader::setImageColors(Image *image)
 				for(int j = 0; j < img_width; j++)
 				{
 
-					blue = readByte();
-					green = readByte();
-					red = readByte();
-
-					image->setPixel(img_height - 1 - i, j, red, green, blue);
+					B = readByte();
+					G = readByte();
+					R = readByte();
+					
+					image->setPixel(img_height - 1 - i, j, R, G, B);
 				}
 
 				file.seekg(3, ios::cur);
@@ -85,12 +202,12 @@ void BMPReader::setImageColors(Image *image)
 			{
 				for(int j = 0; j < img_width; j++)
 				{
-					blue = readByte();
-					green = readByte();
-					red = readByte();
-					alpha = readByte();
+					B = readByte();
+					G = readByte();
+					R = readByte();
+					A = readByte();
 
-					image->setPixel(img_height - 1 - i, j, red, green, blue, alpha);
+					image->setPixel(img_height - 1 - i, j, R, G, B, A);
 				}
 			}
 			break;
@@ -108,7 +225,9 @@ Image* BMPReader::getImageStruct()
 	int offset = readInt();
 	//cout<<"offset = "<<offset<<endl;
 		
-	file.seekg(4, ios::cur);
+	dib_header_size = readInt();
+
+	//file.seekg(4, ios::cur);
 
 	img_width = readInt();
 	img_height = readInt();
@@ -124,19 +243,40 @@ Image* BMPReader::getImageStruct()
 	compresssion = readInt();
 	//cout<<"compresssion = "<<compresssion<<endl;
 
-	int cur_pos = file.tellg();
+	file.seekg(3*4, ios::cur);
+	colors_in_color_table = readInt();
+	//cout<<"colors_in_color_table = "<<colors_in_color_table<<endl;
 
-	//cout<<"cur_pos = "<<cur_pos<<" offset - cur_pos = "<<offset - cur_pos<<endl;
-
-	file.seekg(offset - cur_pos, ios::cur);
-
-	int color_type;
-	if(bits_per_pixel == 24)
+	if(colors_in_color_table > 0)
 	{
-		color_type = 2;
+		int cur_pos = file.tellg();
+		file.seekg(14 + dib_header_size - cur_pos, ios::cur);
+
+		color_table = new Pixel[colors_in_color_table];
+
+		int R, G, B, A;
+
+		for(int i = 0; i < colors_in_color_table; i++)
+		{
+			R = readInt();
+			G = readInt();
+			B = readInt();
+			A = readInt();
+
+			color_table[i].setColor(R, G, B, A);
+		}
+
+	}
+	else
+	{
+		int cur_pos = file.tellg();
+
+		//cout<<"cur_pos = "<<cur_pos<<" offset - cur_pos = "<<offset - cur_pos<<endl;
+
+		file.seekg(offset - cur_pos, ios::cur);
 	}
 
-	Image *image = new Image(img_width, img_height, color_type);
+	Image *image = new Image(img_width, img_height);
 	setImageColors(image);
 
 	file.close();

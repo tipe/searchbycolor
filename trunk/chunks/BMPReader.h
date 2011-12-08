@@ -14,11 +14,17 @@ using namespace std;
 class BMPReader : public ImageReader
 {
 private:
+	int file_size;
+
+	int img_size;
+
 	int dib_header_size;
 	int bits_per_pixel;
 
 	int compresssion;
 	int colors_in_color_table;
+
+	int shift;
 
 	int red_channel;
 	int green_channel;
@@ -29,11 +35,15 @@ private:
 
 	
 	void setImageColors(Image *image);
+	void getUncomprColors(Image *image);
+
 	int getIntInRightOrder(char *buf);
 	unsigned int readInt();
 
 public:
 	BMPReader(string file_name);
+	~BMPReader();
+
 	Image* getImageStruct();
 };
 

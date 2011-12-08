@@ -168,11 +168,14 @@ int main(int argc, char *argv[])
     			//cout<<"file = "<<file_name<<endl;
     			BMPReader reader(file_name);
 
-    			image = reader.getImageStruct();
+    			image = reader.getImageStruct();	
+    			
     		}
 
     		float percent = isColorBasic(image, red, green, blue, range);
     		//cout<<"percent = "<<percent<<" file = "<<file_name<<endl;
+
+    		   		
     		
     		if(percent >= 5.0)
     		{
@@ -182,6 +185,7 @@ int main(int argc, char *argv[])
     		delete image;
     	}        
     }
+    
     closedir(dir);
 
 

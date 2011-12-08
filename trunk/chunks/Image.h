@@ -9,15 +9,6 @@
 
 using namespace std;
 
-#define BIT1  1
-#define BIT2  21
-#define BIT4  4
-#define BIT8  8
-#define BIT16 16
-#define BIT24 2
-#define BIT32 6
-
-
 class Pixel
 {
 private:

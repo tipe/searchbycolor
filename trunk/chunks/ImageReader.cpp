@@ -22,6 +22,8 @@ unsigned int ImageReader::getIntSum(unsigned int i1, unsigned int i2, unsigned i
 
 unsigned int ImageReader::readByte()
 {
+	//cout<<"@@@@@@@@@@@@"<<endl;
+
 	char buf[] = "0";
 	
 	file.read(buf, 1);
@@ -30,8 +32,11 @@ unsigned int ImageReader::readByte()
 	{
 		throw runtime_error("222 File not read");
 	}
+
+	//cout<<"!!! buf[0] = "<<getUnsignedInt(buf[0])<<endl;
 	
 	return getUnsignedInt(buf[0]);
+
 }
 
 unsigned int ImageReader::readTwoBytes()

@@ -11,31 +11,32 @@
 #include "MyDecompressor.h"
 #include "ImageReader.h"
 
-using namespace std;
 
 
 
 typedef std::vector<char> V_IDATData;
 
-typedef vector<unsigned int> ScanLine;
-typedef vector<ScanLine> V_ScanLines;
+typedef std::vector<unsigned int> ScanLine;
+typedef std::vector<ScanLine> V_ScanLines;
 
 
 class PNGReader : public ImageReader
 {
 private:
 	int bit_depth; 	
-	int colour_type; 	
+	int color_type; 	
 	int compr_method; 	
 	int filter_method; 
 	int interlace_method;
 
 	V_IDATData v_idat_total_data;	
 
+	Pixel *color_table;
+
 	void doInitData();
 	
-	void getIHDRData();
-	char* getIDATData(unsigned int &data_length);
+	void getIHDRData(std::ifstream &file);
+	char* getIDATData(unsigned int &data_length, std::ifstream &file);
 
 	char* getPNGData(unsigned int &data_length);
 
@@ -51,10 +52,11 @@ private:
 	unsigned int getPaethPredictor(unsigned int prev, unsigned int up, unsigned int diag);
 
 	int getIntInRightOrder(char *buf);
-	unsigned int readInt();
+	unsigned int readInt(std::ifstream &file);
 
 public:
-	PNGReader(string file_name);	
+	PNGReader(std::string &file_name);	
+	~PNGReader();
 	Image* getImageStruct();
 };
 

@@ -34,14 +34,14 @@ private:
 	Pixel *color_table;
 
 	
-	void setImageColors(Image *image);
-	void getUncomprColors(Image *image);
+	void setImageColors(Image *image, ifstream &file);
+	void getUncomprColors(Image *image, ifstream &file);
 
 	int getIntInRightOrder(char *buf);
-	unsigned int readInt();
+	unsigned int readInt(ifstream &file);
 
 public:
-	BMPReader(string file_name);
+	BMPReader(string &file_name);
 	~BMPReader();
 
 	Image* getImageStruct();

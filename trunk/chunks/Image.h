@@ -6,8 +6,8 @@
 #include <math.h>
 #include <stdexcept>
 #include "Image.h"
+#include "Distribution.h"
 
-using namespace std;
 
 class Pixel
 {
@@ -47,6 +47,10 @@ public:
 	int getHeight();
 	void setPixel(int i, int j, unsigned int R, unsigned int G, unsigned int B, unsigned int A=0);
 	Pixel getPixel(int i, int j);
+
+	float getPercentColor(unsigned int r, unsigned int g, unsigned int b, unsigned int range);
+
+	void getDistribution(Distribution *distribution);
 };
 
 #endif //IMAGE_H

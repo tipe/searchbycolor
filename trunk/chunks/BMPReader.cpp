@@ -4,16 +4,9 @@
 #include <stdexcept>
 
 
-BMPReader::BMPReader(string file_name)
+BMPReader::BMPReader(string &file_name)
 {
 	this->file_name = file_name;
-	file.open(file_name.c_str(), fstream::binary);
-	if(file.good() != true)
-	{
-		throw runtime_error("PNG file not open");
-	}
-	file.close();
-
 	color_table = NULL;
 }
 
@@ -29,26 +22,10 @@ BMPReader::~BMPReader()
 
 int BMPReader::getIntInRightOrder(char *buf)
 {
-	int result = 0;
-	
-	int tmp = 0;
-	for(int i = 0; i < 4; i++)
-	{
-		if(buf[i] < 0)
-		{
-			tmp = 256 + buf[i];
-		}
-		else
-		{
-			tmp = buf[i];
-		}
-		result += tmp*pow(256, i);
-	}
-	
-	return result;
+	return ImageReader::getIntInRightOrder(1, buf);
 }
 
-unsigned int BMPReader::readInt()
+unsigned int BMPReader::readInt(ifstream &file)
 {
 	char buf[] = "0000";
 	
@@ -65,172 +42,75 @@ unsigned int BMPReader::readInt()
 }
 
 
-void BMPReader::setImageColors(Image *image)
+void BMPReader::setImageColors(Image *image, ifstream &file)
 {
-	int B, G, R, A, index;
-
-	switch(bits_per_pixel)
+	int B, G, R, A=0, index;
+	
+	if(bits_per_pixel <= 16)
 	{
-		case 1:
-			for(int i = 0; i < img_height; i++)
-			{
-				for(int j = 0; j < img_width; j+=8)
-				{
-					char buf[] = "00000000";
-					file.read(buf, 1);
+		int step = 8/bits_per_pixel;
 
-					for(int k = 0; k < 8; k++)
+		for(int i = 0; i < img_height; i++)
+		{
+			for(int j = 0; j < img_width; j+=step)
+			{
+				char buf[] = "00000000";
+				file.read(buf, 1);
+
+				for(int k = 0; k < 8; k+=bits_per_pixel)
+				{
+					if(bits_per_pixel <= 8)
 					{
-						index = (int)buf[k];
-
-						R = color_table[index].getRed();
-						G = color_table[index].getGreen();
-						B = color_table[index].getBlue();
-						A = color_table[index].getAlpha();
-
-						image->setPixel(img_height - 1 - i, j, R, G, B, A);
+						index  = 0;
+						for(int s = 0; s < bits_per_pixel; ++s)
+						{
+							index += (int)buf[k]*pow(2, s);
+						}
 					}
-					
-				}
-
-				file.seekg(shift, ios::cur);
-			}
-
-			break;
-
-		case 2:
-			for(int i = 0; i < img_height; i++)
-			{
-				for(int j = 0; j < img_width; j+=4)
-				{
-					char buf[] = "00000000";
-					file.read(buf, 1);
-
-					for(int k = 0; k < 8; k+=2)
+					else
 					{
-						index = 2*(int)buf[k] + (int)buf[k+1];
-
-						R = color_table[index].getRed();
-						G = color_table[index].getGreen();
-						B = color_table[index].getBlue();
-						A = color_table[index].getAlpha();
-
-						image->setPixel(img_height - 1 - i, j, R, G, B, A);
+						index = readTwoBytes(file);
 					}
-					
-				}
-
-				file.seekg(shift, ios::cur);
-			}
-
-			break;
-
-		case 4:
-			for(int i = 0; i < img_height; i++)
-			{
-				for(int j = 0; j < img_width; j+=2)
-				{
-					char buf[] = "00000000";
-					file.read(buf, 1);
-
-					for(int k = 0; k < 8; k+=4)
-					{
-						index = 8*(int)buf[k] + 4*(int)buf[k+1] + 2*(int)buf[k+2] + (int)buf[k+3];
-
-						R = color_table[index].getRed();
-						G = color_table[index].getGreen();
-						B = color_table[index].getBlue();
-						A = color_table[index].getAlpha();
-
-						image->setPixel(img_height - 1 - i, j, R, G, B, A);
-					}
-					
-				}
-
-				file.seekg(shift, ios::cur);
-			}
-
-			break;
-
-		case 8:
-			for(int i = 0; i < img_height; i++)
-			{
-				for(int j = 0; j < img_width; j++)
-				{
-					index = readByte();
 
 					R = color_table[index].getRed();
 					G = color_table[index].getGreen();
 					B = color_table[index].getBlue();
 					A = color_table[index].getAlpha();
 
-					image->setPixel(img_height - 1 - i, j, R, G, B, A);
-				}
-
-				file.seekg(shift, ios::cur);
-			}
-
-			break;
-
-		case 16:
-			for(int i = 0; i < img_height; i++)
-			{
-				for(int j = 0; j < img_width; j++)
-				{
-					index = readTwoBytes();
-
-					R = color_table[index].getRed();
-					G = color_table[index].getGreen();
-					B = color_table[index].getBlue();
-					A = color_table[index].getAlpha();
+					//cout<<"A = "<<A<<endl;
 
 					image->setPixel(img_height - 1 - i, j, R, G, B, A);
 				}
-
-				file.seekg(shift, ios::cur);
+				
 			}
 
-			break;
+			file.seekg(shift, ios::cur);
+		}
 
-		case 24:
-
-			for(int i = 0; i < img_height; i++)
-			{
-				for(int j = 0; j < img_width; j++)
-				{
-					B = readByte();
-					G = readByte();
-					R = readByte();
-					
-					image->setPixel(img_height - 1 - i, j, R, G, B);
-				}
-
-				file.seekg(shift, ios::cur);
-			}
-			break;
-
-		case 32:
-
-			for(int i = 0; i < img_height; i++)
-			{
-				for(int j = 0; j < img_width; j++)
-				{
-					B = readByte();
-					G = readByte();
-					R = readByte();
-					A = readByte();
-
-					image->setPixel(img_height - 1 - i, j, R, G, B, A);
-				}
-
-				file.seekg(shift, ios::cur);
-			}
-			break;
 	}
+	else
+	{
+		for(int i = 0; i < img_height; i++)
+		{
+			for(int j = 0; j < img_width; j++)
+			{
+				B = readByte(file);
+				G = readByte(file);
+				R = readByte(file);
+
+				if(bits_per_pixel == 32)
+					A = readByte(file);
+				
+				image->setPixel(img_height - 1 - i, j, R, G, B, A);
+			}
+
+			file.seekg(shift, ios::cur);
+		}
+	}	
 }
 
 
-void BMPReader::getUncomprColors(Image *image)
+void BMPReader::getUncomprColors(Image *image, ifstream &file)
 {
 	int R, G, B, A;
 
@@ -243,8 +123,8 @@ void BMPReader::getUncomprColors(Image *image)
 
 			while(img_pos < img_size)
 			{
-				int count = readByte();
-				int index = readByte();
+				int count = readByte(file);
+				int index = readByte(file);
 
 				if(count > 0)
 				{
@@ -270,9 +150,7 @@ void BMPReader::getUncomprColors(Image *image)
 
 				img_pos += 2;
 			}
-			
 
-			break;
 	}	
 }
 
@@ -282,38 +160,44 @@ Image* BMPReader::getImageStruct()
 	img_width = 0;
 	img_height = 0;
 
+	ifstream file;
 	file.open(file_name.c_str(), fstream::binary);
 
+	if(file.good() != true)
+	{
+		throw runtime_error("PNG file not open");
+	}
+
 	file.seekg(2, ios::beg);
-	file_size = readInt();
+	file_size = readInt(file);
 	//cout<<"file_size = "<<file_size<<endl;
 
 	file.seekg(4, ios::cur);
-	int offset = readInt();
+	int offset = readInt(file);
 	//cout<<"offset = "<<offset<<endl;
 		
-	dib_header_size = readInt();
+	dib_header_size = readInt(file);
 	//cout<<"dib_header_size = "<<dib_header_size<<endl;
 
 
-	img_width = readInt();
-	img_height = readInt();
+	img_width = readInt(file);
+	img_height = readInt(file);
 
 	//cout<<"img_width = "<<img_width<<endl;
 	//cout<<"img_height = "<<img_height<<endl;
 
 	file.seekg(2, ios::cur);
 
-	bits_per_pixel = readTwoBytes();
+	bits_per_pixel = readTwoBytes(file);
 	//cout<<"bits_per_pixel = "<<bits_per_pixel<<endl;
 
-	compresssion = readInt();
+	compresssion = readInt(file);
 	//cout<<"compresssion = "<<compresssion<<endl;
 
-	img_size = readInt();
+	img_size = readInt(file);
 
 	file.seekg(2*4, ios::cur);
-	colors_in_color_table = readInt();
+	colors_in_color_table = readInt(file);
 	
 
 	if(dib_header_size == 40)
@@ -332,6 +216,8 @@ Image* BMPReader::getImageStruct()
 	{
 		throw runtime_error("Unknown data");
 	}
+
+	//cout<<"bits_per_pixel = "<<bits_per_pixel<<endl;
 	
 	
 	if(bits_per_pixel < 24)//(colors_in_color_table > 0)
@@ -346,18 +232,18 @@ Image* BMPReader::getImageStruct()
 		color_table = new Pixel[colors_in_color_table];
 
 		int R, G, B, A;
+		//cerr<<"after new"<<endl;
 
 		
 		for(int i = 0; i < colors_in_color_table; i++)
 		{
-			// 	cout<<"i = "<<i<<"  ";
-			R = readByte();
-			G = readByte();
-			B = readByte();
-			A = readByte();
+			//cerr<<"i = "<<i<<"  ";
+			R = readByte(file);
+			G = readByte(file);
+			B = readByte(file);
+			A = readByte(file);
 
-
-			// 	cout<<"  R = "<<R<<" G = "<<G<<" B = "<<B<<" A = "<<color_table<<"  ";
+			//cout<<"  R = "<<R<<" G = "<<G<<" B = "<<B<<" A = "<<A<<"  ";
 
 			color_table[i].setColor(R, G, B, A);
 		}
@@ -376,11 +262,11 @@ Image* BMPReader::getImageStruct()
 
 	if(compresssion == 0)
 	{
-		setImageColors(image);	
+		setImageColors(image, file);	
 	}
 	else
 	{
-		getUncomprColors(image);
+		getUncomprColors(image, file);
 	}
 	
 

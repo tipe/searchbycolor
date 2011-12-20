@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     {
     	if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
     	{
-    		string expansion = (strrchr(entry->d_name, '.'));
+    		string expansion = (strrchr(entry->d_name, '.'));	//TODO rename to "extension"
 
     		string file_name = argv[1];
     		file_name += "/";

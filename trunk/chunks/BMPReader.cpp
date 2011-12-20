@@ -72,6 +72,7 @@ void BMPReader::setImageColors(Image *image, ifstream &file)
 						index = readTwoBytes(file);
 					}
 
+					cout << "index=" << index << endl;
 					R = color_table[index].getRed();
 					G = color_table[index].getGreen();
 					B = color_table[index].getBlue();
@@ -226,7 +227,7 @@ Image* BMPReader::getImageStruct()
 		file.seekg(14 + dib_header_size - cur_pos, ios::cur);
 
 		colors_in_color_table = (offset - 14 - dib_header_size)/4;
-		//cout<<"! colors_in_color_table = "<<colors_in_color_table<<endl;
+		cout<<"! colors_in_color_table = "<<colors_in_color_table<<endl;
 
 
 		color_table = new Pixel[colors_in_color_table];

@@ -23,7 +23,7 @@ protected:
 
 
 public:
-	virtual Image* getImageStruct()=0;
+	virtual Image* getImageStruct()=0;	//TODO rename to getImage()
 	//????virtual ~ImageReader()=0;
 };
 

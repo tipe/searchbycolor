@@ -5,7 +5,7 @@ class Distribution
 {
 private:
 	float ***colors_distribution;
-	int size_distribution;
+	int size_distribution;	//TODO choose one name instead of two
 
 	void getThreeDimensionalMatrix();
 	void deleteThreeDimensionalMatrix();

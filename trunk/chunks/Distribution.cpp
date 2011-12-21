@@ -8,7 +8,7 @@
 void Distribution::getThreeDimensionalMatrix()
 {
 	colors_distribution = new float**[size_distribution];
-	for(int i = 0; i < size_distribution; i++)
+	for(int i = 0; i < size_distribution; i++)	//TODO simplify
 	{
 		colors_distribution[i] = new float*[size_distribution];
 	}
@@ -56,7 +56,7 @@ void Distribution::deleteThreeDimensionalMatrix()
 Distribution::Distribution(int divider)
 {
 	size_distribution = divider;
-	getThreeDimensionalMatrix();
+	getThreeDimensionalMatrix();	//TODO inline
 }
 
 
@@ -97,7 +97,7 @@ int Distribution::compare(Distribution *dist, int range_percent)
 {
 	if(size_distribution != dist->getDivider())
 	{
-		return -1;
+		return -1;	//TODO it's better to use exception here
 	}
 
 	int count = 0;	

@@ -54,14 +54,14 @@ int main(int argc, char *argv[])
     		if(expansion == ".png")
     		{
     			//cout<<"png"<<endl;
-    			//cout<<"file = "<<file_name<<endl;
+    			cout<<"file = "<<file_name<<endl;
     			reader = new PNGReader(file_name);  
     		}
     		else
     		if(expansion == ".bmp")
     		{
     			//cout<<"bmp"<<endl;
-    			//cout<<"file = "<<file_name<<endl;
+    			cout<<"file = "<<file_name<<endl;
     			reader = new BMPReader(file_name);
     		}
 
@@ -70,20 +70,35 @@ int main(int argc, char *argv[])
     		{
     			image = reader->getImageStruct();
     			images.push_back(image);
+                images_names.push_back(file_name);
 
-    			if(image->getPercentColor(250, 0, 0, 70) >= 5)
-    			{
-    				cout<<file_name<<endl;
-    			}
+    			// if(image->getPercentColor(250, 0, 0, 70) >= 5)
+    			// {
+    			// 	cout<<file_name<<endl;
+    			// }
     		}
     		
     	}        
     }
 
-    // ImagesComparative comparative;
-    // comparative.getSimilarImages(images);
+    ImagesComparative comparative;
+    std::vector<std::vector<int> > similar_images;
+    comparative.getSimilarImages(images, similar_images);
 
-    for(int i = 0; i < images.size(); ++i)
+    std::cout<<"********"<<std::endl;
+    for(unsigned int i = 0; i < similar_images.size(); ++i)
+    {
+        for(unsigned int j = 0; j < similar_images[i].size(); ++j)
+        {
+            std::cout<<images_names[similar_images[i][j]]<<" ";
+        }
+        std::cout<<std::endl;
+    }
+    std::cout<<"********"<<std::endl;
+
+
+
+    for(unsigned int i = 0; i < images.size(); ++i)
     {
     	delete images[i];
     }

@@ -1,6 +1,7 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
+#include <vector>
 
 
 class Graph
@@ -8,6 +9,8 @@ class Graph
 private:
 	bool **adjacency_matrix;
 	int tops_count;
+
+	bool isInCollection(int val, std::vector<int> &collection);
 
 public:
 	Graph(int tops_count);
@@ -17,7 +20,7 @@ public:
 
 	bool getAdjacency(int i, int j);
 
-	void getClique();
+	void getClique(std::vector<std::vector<int> > &similar_images);
 };
 
 

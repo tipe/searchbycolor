@@ -1,3 +1,7 @@
+#include <iostream>
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "Graph.h"
 #include "Distribution.h"
 
@@ -13,7 +17,7 @@ ImagesComparative::ImagesComparative()
 
 ImagesComparative::~ImagesComparative()
 {
-	for(int i = 0; i < images_dists.size(); ++i)
+	for(unsigned int i = 0; i < images_dists.size(); ++i)
 	{
 		images_dists[i]->~Distribution();
 	}
@@ -22,6 +26,8 @@ ImagesComparative::~ImagesComparative()
 
 void ImagesComparative::buildGraph(std::vector<Image*> &images, Graph *graph)
 {
+	std::cerr<<"build graph "<<std::endl;
+
 	int images_count = images.size();
 
 	Distribution *image_dist;
@@ -29,12 +35,14 @@ void ImagesComparative::buildGraph(std::vector<Image*> &images, Graph *graph)
 
 	for(int i = 0; i < images_count; ++i)
 	{
-		//std::cerr<<"i = "<<i<<std::endl;
+		std::cerr<<"i = "<<i<<std::endl;
 
 		image_dist = new Distribution();
+
+		std::cerr<<"111111"<<std::endl;
 		images[i]->getDistribution(image_dist);
 
-		// std::cerr<<"========="<<std::endl;
+		std::cerr<<"========="<<std::endl;
 
 		// for(int ii = 0; ii < image_dist->getDivider(); ++ii)
 		// 	for(int jj = 0; jj < image_dist->getDivider(); ++jj)
@@ -48,7 +56,7 @@ void ImagesComparative::buildGraph(std::vector<Image*> &images, Graph *graph)
 
 	bool similar;
 
-	//std::cerr<<"buildGraph 1"<<std::endl;
+	std::cerr<<"buildGraph 1"<<std::endl;
 
 	for(int i = 0; i < images_count; ++i)
 	{
@@ -63,22 +71,24 @@ void ImagesComparative::buildGraph(std::vector<Image*> &images, Graph *graph)
 		}
 	}
 
-// 	std::cerr<<"graph:"<<std::endl;
+	std::cerr<<"graph:"<<std::endl;
 
-// 	for(int i = 0; i < images_count; ++i)
-// 	{
-// 		for(int j = 0; j < images_count; ++j)
-// 		{
-// 			std::cerr<<graph->getAdjacency(i,j)<<" "<<std::endl;			
-// 		}
-// 		std::cerr<<std::endl;
-// 	}
+	for(int i = 0; i < images_count; ++i)
+	{
+		for(int j = 0; j < images_count; ++j)
+		{
+			std::cerr<<graph->getAdjacency(i,j)<<" ";			
+		}
+		std::cerr<<std::endl;
+	}
 }
 
 
-void ImagesComparative::getSimilarImages(std::vector<Image*> &images)
+void ImagesComparative::getSimilarImages(std::vector<Image*> &images, std::vector<std::vector<int> > &similar_images)
 {
+	std::cout<<"!!!!"<<std::endl;
 	Graph graph(images.size());
 	buildGraph(images, &graph);
-	graph.getClique();	
+
+	graph.getClique(similar_images);	
 }

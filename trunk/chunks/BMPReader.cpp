@@ -45,6 +45,8 @@ unsigned int BMPReader::readInt(ifstream &file)
 void BMPReader::setImageColors(Image *image, ifstream &file)
 {
 	int B, G, R, A=0, index;
+
+	//cout<<"pos = "<<file.tellg()<<endl;
 	
 	if(bits_per_pixel <= 16)
 	{
@@ -57,6 +59,11 @@ void BMPReader::setImageColors(Image *image, ifstream &file)
 				char buf[] = "00000000";
 				file.read(buf, 1);
 
+				static int yy = 0;
+				if(j==176) cout << "bits_per_pixel = "<<bits_per_pixel<<" buf[0]=" << (int)buf[0]<<" buf[1]=" << buf[1]<<" buf[2]=" << buf[2]<<" buf[3]=" << buf[3]<<
+				                  " buf[4]=" << buf[4]<<" buf[5]=" << buf[5]<<" buf[6]=" << buf[6]<<" buf[7]=" << buf[7]<<endl;
+				yy++;
+
 				for(int k = 0; k < 8; k+=bits_per_pixel)
 				{
 					if(bits_per_pixel <= 8)
@@ -64,12 +71,21 @@ void BMPReader::setImageColors(Image *image, ifstream &file)
 						index  = 0;
 						for(int s = 0; s < bits_per_pixel; ++s)
 						{
-							index += (int)buf[k]*pow(2, s);
+							index += getUnsignedInt(buf[s])*pow(2, s);
 						}
 					}
 					else
 					{
 						index = readTwoBytes(file);
+					}
+					
+					if(j==176) 
+					{
+						// std::cerr<<"index = "<<index<<std::endl;
+						// std::cerr<<"color_table[index].getRed(); = "<<color_table[index].getRed()<<std::endl;
+						// std::cerr<<"color_table[index].getGreen(); = "<<color_table[index].getGreen()<<std::endl;
+						// std::cerr<<"color_table[index].getBlue(); = "<<color_table[index].getBlue()<<std::endl;
+						// std::cerr<<"color_table[index].getAlpha(); = "<<color_table[index].getAlpha()<<std::endl;
 					}
 
 					cout << "index=" << index << endl;
@@ -78,7 +94,7 @@ void BMPReader::setImageColors(Image *image, ifstream &file)
 					B = color_table[index].getBlue();
 					A = color_table[index].getAlpha();
 
-					//cout<<"A = "<<A<<endl;
+					//cerr<<"! index = "<<index<<" ";
 
 					image->setPixel(img_height - 1 - i, j, R, G, B, A);
 				}

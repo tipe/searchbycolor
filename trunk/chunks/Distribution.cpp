@@ -87,6 +87,10 @@ float Distribution::getValue(int i, int j, int k)
 void Distribution::addValue(int i, int j, int k, float delta)
 {
 	colors_distribution[i][j][k] += delta;
+	static int y = 0;
+	//std::cerr<<"y="<<y<<std::endl;
+	//if(y > 16000) std::cerr<<" y = "<<y;
+	y++;
 }
 
 int Distribution::compare(Distribution *dist, int range_percent)

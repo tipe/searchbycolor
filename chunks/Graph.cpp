@@ -1,4 +1,3 @@
-#include <vector>
 #include <iostream>
 
 #include "Graph.h"
@@ -41,62 +40,90 @@ bool Graph::getAdjacency(int i, int j)
 	return adjacency_matrix[i][j];
 }
 
-void Graph::getClique()
-{
-	//std::cerr<<"getClique tops_count = "<<tops_count<<std::endl;
 
-	std::vector<std::vector<int> > similar_images;
+bool Graph::isInCollection(int val, std::vector<int> &collection)
+{
+	for(unsigned int i = 0; i < collection.size(); ++i)
+	{
+		if((int)collection[i] == val)
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
+
+void Graph::getClique(std::vector<std::vector<int> > &similar_images)
+{
+	std::cout<<"!!!!!!!!"<<std::endl;
+
 	std::vector<int> tmp;
 	int tmp_size = 0, j_compare, i_compare, num;
 
-	for(int i = 0; i < tops_count; ++i)
+	for(int i = 0; i < tops_count; ++i) // begin reading row
 	{
 		tmp.push_back(i);
-		for(int j = i+1; j < tops_count; ++j)
+		for(int j = i+1; j < tops_count; ++j) // search 1 in row
 		{
-			//std::cerr<<"! j = "<<j<<std::endl;
 			if(adjacency_matrix[i][j] == 1)
 			{
 				tmp_size = 1;
 
 				for(j_compare = j; j_compare < tops_count; ++j_compare)
 				{
-					//std::cerr<<"!!! j_compare = "<<j_compare<<std::endl;
 					i_compare = i;
 					num = 0;
-					//std::cerr<<"! tmp.size() = "<<tmp.size()<<std::endl;
-					//std::cerr<<"! num = "<<num<<" tmp_size = "<<tmp_size<<" tmp[num] = "<<tmp[num]<<std::endl;
+
 					while(num < tmp_size && adjacency_matrix[tmp[num]][j_compare] == 1)
 					{
-						//std::cerr<<"!!! num = "<<num<<" tmp_size = "<<tmp_size<<std::endl;
 						i_compare = tmp[num];
 						num++;
-						//std::cerr<<"123 num = "<<num<<" tmp_size = "<<tmp_size<<std::endl;
 					}
-
-					//std::cerr<<"pred"<<std::endl;
 
 					if(num == tmp_size)
 					{
-						//std::cerr<<"if if if"<<std::endl;
 						tmp_size++;
 						tmp.push_back(j_compare);
-					}
-
-					//std::cerr<<"! tmp.size() = "<<tmp.size()<<" tmp_size = "<<tmp_size<<std::endl;
-					if(tmp_size > 1)
-					{
-						for(int k = 0; k < tmp.size(); ++k)
-						{
-							//std::cout<<"!!! "<<tmp[k]<<std::endl;
-						}
-
-						similar_images.push_back(tmp);
-						tmp.clear();
-						//std::cout<<"----"<<std::endl;
 					}
 				}			
 			}
 		}
+
+		similar_images.push_back(tmp);
+		tmp.clear();
+	}
+
+	
+	std::vector<int> collection;
+
+	for(unsigned int i = 0; i < similar_images.size(); ++i)
+	{
+		if(similar_images[i].size() <= 1)
+		{
+			similar_images.erase(similar_images.begin()+i);
+			i--;			
+		}
+		else
+		{
+			collection.push_back(similar_images[i][0]);
+
+			for(unsigned int j = 1; j < similar_images[i].size(); ++j)
+			{
+				if(isInCollection(similar_images[i][j], collection) == 1)
+				{
+					similar_images[i].erase((similar_images[i]).begin()+j);
+					j--;
+				}
+				else
+				{
+					collection.push_back(similar_images[i][j]);
+				}
+				
+			}
+		}
+
+		collection.clear();
 	}
 }

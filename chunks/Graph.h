@@ -8,7 +8,7 @@ class Graph
 {
 private:
 	bool **adjacency_matrix;
-	int tops_count;
+	int tops_count;	//TODO rename to vertex_count
 
 	bool isInCollection(int val, std::vector<int> &collection);
 

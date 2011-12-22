@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     {
     	if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
     	{
-    		string expansion = (strrchr(entry->d_name, '.'));	//TODO rename to "extension"
+    		string expansion = (strrchr(entry->d_name, '.'));
 
     		string file_name = argv[1];
     		file_name += "/";
@@ -54,14 +54,14 @@ int main(int argc, char *argv[])
     		if(expansion == ".png")
     		{
     			//cout<<"png"<<endl;
-    			cout<<"file = "<<file_name<<endl;
+    			//cout<<"file = "<<file_name<<endl;
     			reader = new PNGReader(file_name);  
     		}
     		else
     		if(expansion == ".bmp")
     		{
     			//cout<<"bmp"<<endl;
-    			cout<<"file = "<<file_name<<endl;
+    			//cout<<"file = "<<file_name<<endl;
     			reader = new BMPReader(file_name);
     		}
 
@@ -72,10 +72,10 @@ int main(int argc, char *argv[])
     			images.push_back(image);
                 images_names.push_back(file_name);
 
-    			// if(image->getPercentColor(250, 0, 0, 70) >= 5)
-    			// {
-    			// 	cout<<file_name<<endl;
-    			// }
+    			if(image->getPercentColor(250, 0, 0, 70) >= 5)
+    			{
+    				cout<<file_name<<endl;
+    			}
     		}
     		
     	}        
@@ -85,7 +85,6 @@ int main(int argc, char *argv[])
     std::vector<std::vector<int> > similar_images;
     comparative.getSimilarImages(images, similar_images);
 
-    std::cout<<"********"<<std::endl;
     for(unsigned int i = 0; i < similar_images.size(); ++i)
     {
         for(unsigned int j = 0; j < similar_images[i].size(); ++j)
@@ -94,9 +93,6 @@ int main(int argc, char *argv[])
         }
         std::cout<<std::endl;
     }
-    std::cout<<"********"<<std::endl;
-
-
 
     for(unsigned int i = 0; i < images.size(); ++i)
     {

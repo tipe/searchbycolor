@@ -2,15 +2,15 @@
 
 #include "Graph.h"
 
-Graph::Graph(int tops_count)
+Graph::Graph(int vertex_count)
 {
-	this->tops_count = tops_count;
+	this->vertex_count = vertex_count;
 
-	adjacency_matrix = new bool*[tops_count];
-	for(int i = 0; i < tops_count; ++i)
+	adjacency_matrix = new bool*[vertex_count];
+	for(int i = 0; i < vertex_count; ++i)
 	{
-		adjacency_matrix[i] = new bool[tops_count];
-		for(int j = 0; j < tops_count; ++j)
+		adjacency_matrix[i] = new bool[vertex_count];
+		for(int j = 0; j < vertex_count; ++j)
 		{
 			adjacency_matrix[i][j] = 0;
 		}
@@ -20,7 +20,7 @@ Graph::Graph(int tops_count)
 
 Graph::~Graph()
 {
-	for(int i = 0; i < tops_count; ++i)
+	for(int i = 0; i < vertex_count; ++i)
 	{
 		delete[] adjacency_matrix[i];
 	}
@@ -45,7 +45,7 @@ bool Graph::isInCollection(int val, std::vector<int> &collection)
 {
 	for(unsigned int i = 0; i < collection.size(); ++i)
 	{
-		if((int)collection[i] == val)
+		if(collection[i] == val)
 		{
 			return 1;
 		}
@@ -57,21 +57,19 @@ bool Graph::isInCollection(int val, std::vector<int> &collection)
 
 void Graph::getClique(std::vector<std::vector<int> > &similar_images)
 {
-	std::cout<<"!!!!!!!!"<<std::endl;
-
 	std::vector<int> tmp;
 	int tmp_size = 0, j_compare, i_compare, num;
 
-	for(int i = 0; i < tops_count; ++i) // begin reading row
+	for(int i = 0; i < vertex_count; ++i) // begin reading row
 	{
 		tmp.push_back(i);
-		for(int j = i+1; j < tops_count; ++j) // search 1 in row
+		for(int j = i+1; j < vertex_count; ++j) // search 1 in row
 		{
 			if(adjacency_matrix[i][j] == 1)
 			{
 				tmp_size = 1;
 
-				for(j_compare = j; j_compare < tops_count; ++j_compare)
+				for(j_compare = j; j_compare < vertex_count; ++j_compare)
 				{
 					i_compare = i;
 					num = 0;

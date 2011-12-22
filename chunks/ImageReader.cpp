@@ -96,7 +96,6 @@ unsigned int ImageReader::readTwoBytes(ifstream &file)
 
 	if (is_bigendian())
 	{
-		//cout<<"1"<<endl;
 		int tmp = 0;
 		for(int i = 1; i >= 0; i--)
 		{
@@ -113,7 +112,6 @@ unsigned int ImageReader::readTwoBytes(ifstream &file)
 	}
 	else
 	{
-		//cout<<"2"<<endl;
 		int tmp = 0;
 		for(int i = 0; i < 2; i++)
 		{
@@ -125,9 +123,7 @@ unsigned int ImageReader::readTwoBytes(ifstream &file)
 			{
 				tmp = buf[i];
 			}
-			//cout<<"tmp = "<<tmp<<endl;
 			result += tmp*pow(256, i);
-			//cout<<"result = "<<result<<endl;
 		}
 	}
 

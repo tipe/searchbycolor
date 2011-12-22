@@ -44,10 +44,8 @@ unsigned int BMPReader::readInt(ifstream &file)
 
 void BMPReader::setImageColors(Image *image, ifstream &file)
 {
-	int B, G, R, A=0, index;
+	int B, G, R, A=0, index;	
 
-	//cout<<"pos = "<<file.tellg()<<endl;
-	
 	if(bits_per_pixel <= 16)
 	{
 		int step = 8/bits_per_pixel;
@@ -56,49 +54,46 @@ void BMPReader::setImageColors(Image *image, ifstream &file)
 		{
 			for(int j = 0; j < img_width; j+=step)
 			{
-				char buf[] = "00000000";
-				file.read(buf, 1);
-
-				static int yy = 0;
-				if(j==176) cout << "bits_per_pixel = "<<bits_per_pixel<<" buf[0]=" << (int)buf[0]<<" buf[1]=" << buf[1]<<" buf[2]=" << buf[2]<<" buf[3]=" << buf[3]<<
-				                  " buf[4]=" << buf[4]<<" buf[5]=" << buf[5]<<" buf[6]=" << buf[6]<<" buf[7]=" << buf[7]<<endl;
-				yy++;
-
-				for(int k = 0; k < 8; k+=bits_per_pixel)
+				if(bits_per_pixel <= 8)
 				{
-					if(bits_per_pixel <= 8)
+					if(j < img_width - img_width % 8 + 1)
 					{
-						index  = 0;
-						for(int s = 0; s < bits_per_pixel; ++s)
-						{
-							index += getUnsignedInt(buf[s])*pow(2, s);
-						}
-					}
-					else
-					{
-						index = readTwoBytes(file);
-					}
-					
-					if(j==176) 
-					{
-						// std::cerr<<"index = "<<index<<std::endl;
-						// std::cerr<<"color_table[index].getRed(); = "<<color_table[index].getRed()<<std::endl;
-						// std::cerr<<"color_table[index].getGreen(); = "<<color_table[index].getGreen()<<std::endl;
-						// std::cerr<<"color_table[index].getBlue(); = "<<color_table[index].getBlue()<<std::endl;
-						// std::cerr<<"color_table[index].getAlpha(); = "<<color_table[index].getAlpha()<<std::endl;
-					}
+						char buf = readByte(file);
 
-					cout << "index=" << index << endl;
+						for(int k = 0; k < 8; k+=bits_per_pixel)
+						{
+							if(j+k/bits_per_pixel < img_width)
+							{
+								index  = 0;
+								
+								for(int s = 0; s < bits_per_pixel; ++s)
+								{
+									int d = ( buf >> (s+k) ) & 1;
+									index += d*pow(2, s);
+								}
+								
+
+								R = color_table[index].getRed();
+								G = color_table[index].getGreen();
+								B = color_table[index].getBlue();
+								A = color_table[index].getAlpha();
+
+								image->setPixel(img_height - 1 - i, j+k/bits_per_pixel, R, G, B, A);
+							}
+						}	
+					}						
+				}
+				else
+				{
+					index = readTwoBytes(file);
+					
 					R = color_table[index].getRed();
 					G = color_table[index].getGreen();
 					B = color_table[index].getBlue();
 					A = color_table[index].getAlpha();
 
-					//cerr<<"! index = "<<index<<" ";
-
 					image->setPixel(img_height - 1 - i, j, R, G, B, A);
 				}
-				
 			}
 
 			file.seekg(shift, ios::cur);
@@ -162,8 +157,7 @@ void BMPReader::getUncomprColors(Image *image, ifstream &file)
 
 						image->setPixel(i, j, R, G, B, A);
 					}	
-				}
-				
+				}				
 
 				img_pos += 2;
 			}
@@ -179,8 +173,8 @@ Image* BMPReader::getImageStruct()
 
 	ifstream file;
 	file.open(file_name.c_str(), fstream::binary);
-
-	if(file.good() != true)
+	
+	if(!file.good())
 	{
 		throw runtime_error("PNG file not open");
 	}
@@ -234,7 +228,6 @@ Image* BMPReader::getImageStruct()
 		throw runtime_error("Unknown data");
 	}
 
-	//cout<<"bits_per_pixel = "<<bits_per_pixel<<endl;
 	
 	
 	if(bits_per_pixel < 24)//(colors_in_color_table > 0)
@@ -243,24 +236,21 @@ Image* BMPReader::getImageStruct()
 		file.seekg(14 + dib_header_size - cur_pos, ios::cur);
 
 		colors_in_color_table = (offset - 14 - dib_header_size)/4;
-		cout<<"! colors_in_color_table = "<<colors_in_color_table<<endl;
+		//cout<<"! colors_in_color_table = "<<colors_in_color_table<<endl;
 
 
 		color_table = new Pixel[colors_in_color_table];
 
 		int R, G, B, A;
-		//cerr<<"after new"<<endl;
+		
 
 		
 		for(int i = 0; i < colors_in_color_table; i++)
 		{
-			//cerr<<"i = "<<i<<"  ";
 			R = readByte(file);
 			G = readByte(file);
 			B = readByte(file);
 			A = readByte(file);
-
-			//cout<<"  R = "<<R<<" G = "<<G<<" B = "<<B<<" A = "<<A<<"  ";
 
 			color_table[i].setColor(R, G, B, A);
 		}
@@ -269,8 +259,6 @@ Image* BMPReader::getImageStruct()
 	else
 	{
 		int cur_pos = file.tellg();
-
-		//cout<<"cur_pos = "<<cur_pos<<" offset - cur_pos = "<<offset - cur_pos<<endl;
 
 		file.seekg(offset - cur_pos, ios::cur);
 	}

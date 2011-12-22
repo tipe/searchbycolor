@@ -8,12 +8,12 @@ class Graph
 {
 private:
 	bool **adjacency_matrix;
-	int tops_count;	//TODO rename to vertex_count
+	int vertex_count;
 
 	bool isInCollection(int val, std::vector<int> &collection);
 
 public:
-	Graph(int tops_count);
+	Graph(int vertex_count);
 	~Graph();
 
 	void setAdjacency(int i, int j, bool adjacency);

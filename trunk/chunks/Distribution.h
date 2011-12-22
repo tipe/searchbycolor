@@ -5,15 +5,12 @@ class Distribution
 {
 private:
 	float ***colors_distribution;
-	int size_distribution;	//TODO choose one name instead of two
-
-	void getThreeDimensionalMatrix();
-	void deleteThreeDimensionalMatrix();
+	int size_distribution;
 
 
 
 public:
-	Distribution(int divider=4);
+	Distribution(int size=4);
 	~Distribution();
 
 	int getDivider();
@@ -23,7 +20,7 @@ public:
 
 	void addValue(int i, int j, int k, float delta);
 
-	int compare(Distribution *dist, int range_percent=15);
+	int compare(Distribution *dist, int range_percent=1);
 };
 
 #endif // DISTRIBUTION_H

@@ -12,8 +12,19 @@
 #include "BMPReader.h"
 #include "ImagesComparative.h"
 
-using namespace std;
 
+
+
+void getImagesByColor(std::vector<Image*> &images, std::vector<int> &imagesByColor)
+{ 
+    for(unsigned int i = 0; i < images.size(); ++i)
+    {
+        if(images[i]->getPercentColor(250, 0, 0, 70) >= 5)
+        {
+           imagesByColor.push_back(i);
+        }
+    }
+}
 
 
 int main(int argc, char *argv[])
@@ -72,10 +83,7 @@ int main(int argc, char *argv[])
     			images.push_back(image);
                 images_names.push_back(file_name);
 
-    			if(image->getPercentColor(250, 0, 0, 70) >= 5)
-    			{
-    				cout<<file_name<<endl;
-    			}
+    			
     		}
     		
     	}        

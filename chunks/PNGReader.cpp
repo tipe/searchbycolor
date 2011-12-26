@@ -32,6 +32,7 @@ void PNGReader::getIHDRData(ifstream &file)
 	img_height       = readInt(file);
 	bit_depth        = readByte(file);
 	color_type       = readByte(file);
+	//cerr<<"color_type = "<<color_type<<endl;
 	compr_method     = readByte(file);
 	filter_method    = readByte(file);
 	interlace_method = readByte(file);
@@ -107,7 +108,7 @@ void PNGReader::doInitData()
 		{
 			int colors_in_color_table = data_length/3;
 
-			//cout<<"PLTE "<<colors_in_color_table<<endl;
+			cout<<"PLTE "<<colors_in_color_table<<endl;
 
 			color_table = new Pixel[colors_in_color_table];
 
@@ -307,21 +308,36 @@ void PNGReader::doDeFilteringType0(int j_count, int j_delta, int cur_small_img, 
 			getCoordPixel(cur_small_img, cur_row, cur_col, pix_i, pix_j);
 		}				
 
-		int alpha = 0;
-		if(color_type == 6)
-		{
-			alpha = getUnsignedInt(scanline[j+3]);
-		}
 		
-		if(color_type != 3)
+		
+		if(color_type == 0 || color_type == 4)
 		{
+			int alpha = 0;
+			int color = getUnsignedInt(scanline[j]);
+
+			if(color_type == 4)
+			{
+				alpha = color;
+			}
+			
+			image->setPixel(pix_i, pix_j, color, color, color, alpha);
+		}
+		else
+		if(color_type == 2 || color_type == 6)
+		{
+			int alpha = 0;
+			if(color_type == 6)
+			{
+				alpha = getUnsignedInt(scanline[j+3]);
+			}
+
 			image->setPixel(pix_i, pix_j, getUnsignedInt(scanline[j]),
 			                		  getUnsignedInt(scanline[j+1]),
 			                		  getUnsignedInt(scanline[j+2]),
 			                		  alpha);
-
 		}
 		else
+		if(color_type == 3)
 		{
 			image->setPixel(pix_i, pix_j, color_table[getUnsignedInt(scanline[j])].getRed(),
 												  color_table[getUnsignedInt(scanline[j])].getGreen(),
@@ -365,6 +381,7 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 		j_count = v_scanlines[i].size() - 2;
 
 		int filt_type = getUnsignedInt(v_scanlines[i][1]);
+		//cerr<<"filt_type = "<<filt_type<<endl;
 		
 		int cur_small_img = v_scanlines[i][0];
 		int cur_col = 0, cur_row = 0;
@@ -399,19 +416,34 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 					getCoordPixel(cur_small_img, cur_row, 0, pix_i, pix_j);
 				}				
 
-				if(color_type == 6)
-				{
-					alpha = getUnsignedInt(v_scanlines[i][5]);
-				}
 				
-				if(color_type != 3)
+				
+				if(color_type == 0 || color_type == 4)
 				{
-					image->setPixel(pix_i, pix_j, getUnsignedInt(v_scanlines[i][2]),
-					                  		  getUnsignedInt(v_scanlines[i][3]),
-					                 		  getUnsignedInt(v_scanlines[i][4]),
-					                  		  alpha);
+					int color = getUnsignedInt(v_scanlines[i][j]);
+
+					if(color_type == 4)
+					{
+						alpha = color;
+					}
+					
+					image->setPixel(pix_i, pix_j, color, color, color, alpha);
 				}
 				else
+				if(color_type == 2 || color_type == 6)
+				{
+					if(color_type == 6)
+					{
+						alpha = getUnsignedInt(v_scanlines[i][5]);
+					}
+
+					image->setPixel(pix_i, pix_j, getUnsignedInt(v_scanlines[i][2]),
+						                  		  getUnsignedInt(v_scanlines[i][3]),
+						                 		  getUnsignedInt(v_scanlines[i][4]),
+						                  		  alpha);
+				}
+				else
+				if(color_type == 3)
 				{
 					image->setPixel(pix_i, pix_j, color_table[getUnsignedInt(v_scanlines[i][2])].getRed(),
 												  color_table[getUnsignedInt(v_scanlines[i][2])].getGreen(),
@@ -437,13 +469,27 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 						getCoordPixel(cur_small_img, cur_row, cur_col-1, pix_prev_i, pix_prev_j);
 					}
 
-					if(color_type == 6)
-					{
-						alpha = getIntSum(getUnsignedInt(v_scanlines[i][j+4]), image->getPixel(pix_prev_i,pix_prev_j).getAlpha());
-					}
+					
 
-					if(color_type != 3)
+					if(color_type == 0 || color_type == 4)
 					{
+						int color = getUnsignedInt(v_scanlines[i][j]);
+
+						if(color_type == 4)
+						{
+							alpha = color;
+						}
+						
+						image->setPixel(pix_i, pix_j, color, color, color, alpha);
+					}
+					else
+					if(color_type == 2 || color_type == 6)
+					{
+						if(color_type == 6)
+						{
+							alpha = getIntSum(getUnsignedInt(v_scanlines[i][j+4]), image->getPixel(pix_prev_i,pix_prev_j).getAlpha());
+						}
+
 						image->setPixel(pix_i, pix_j,
 					                   getIntSum(getUnsignedInt(v_scanlines[i][j+1]), image->getPixel(pix_prev_i,pix_prev_j).getRed()),
 					                   getIntSum(getUnsignedInt(v_scanlines[i][j+2]), image->getPixel(pix_prev_i,pix_prev_j).getGreen()),
@@ -451,6 +497,7 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 					                   alpha);
 					}
 					else
+					if(color_type == 3)
 					{
 						image->setPixel(pix_i, pix_j,
 									    getIntSum(color_table[getUnsignedInt(v_scanlines[i][j])].getRed(), image->getPixel(pix_prev_i,pix_prev_j).getRed()),
@@ -475,19 +522,34 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 					getCoordPixel(cur_small_img, cur_row, 0, pix_i, pix_j);
 				}
 
-				if(color_type == 6)
-				{
-					alpha = getUnsignedInt(v_scanlines[i][5]);
-				}
+				
 
-				if(color_type != 3)
+				if(color_type == 0 || color_type == 4)
 				{
+					int color = getUnsignedInt(v_scanlines[i][j]);
+
+					if(color_type == 4)
+					{
+						alpha = color;
+					}
+					
+					image->setPixel(pix_i, pix_j, color, color, color, alpha);
+				}
+				else
+				if(color_type == 2 || color_type == 6)
+				{
+					if(color_type == 6)
+					{
+						alpha = getUnsignedInt(v_scanlines[i][5]);
+					}
+
 					image->setPixel(pix_i, pix_j, getUnsignedInt(v_scanlines[i][2]),
 					                  		  getUnsignedInt(v_scanlines[i][3]),
 					                  		  getUnsignedInt(v_scanlines[i][4]),
 					                  		  alpha);
 				}
 				else
+				if(color_type == 3)
 				{
 					image->setPixel(pix_i, pix_j, color_table[getUnsignedInt(v_scanlines[i][2])].getRed(),
 												  color_table[getUnsignedInt(v_scanlines[i][2])].getGreen(),

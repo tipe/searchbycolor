@@ -11,6 +11,7 @@ private:
 	int vertex_count;
 
 	bool isInCollection(int val, std::vector<int> &collection);
+	int contained(std::vector<int> &vec1, std::vector<int> &vec2);
 
 public:
 	Graph(int vertex_count);
@@ -20,7 +21,7 @@ public:
 
 	bool getAdjacency(int i, int j);
 
-	void getClique(std::vector<std::vector<int> > &similar_images);
+	void getCliques(std::vector<std::vector<int> > &cliques);
 };
 
 

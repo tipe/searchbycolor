@@ -73,5 +73,5 @@ void ImagesComparative::getSimilarImages(std::vector<Image*> &images, std::vecto
 	Graph graph(images.size());
 	buildGraph(images, &graph);
 
-	graph.getClique(similar_images);	
+	graph.getCliques(similar_images);	
 }

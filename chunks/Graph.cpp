@@ -54,8 +54,40 @@ bool Graph::isInCollection(int val, std::vector<int> &collection)
 }
 
 
+int Graph::contained(std::vector<int> &vec1, std::vector<int> &vec2)
+{
+	std::vector<int> *vecIn;
+	std::vector<int> *vecOut;
 
-void Graph::getClique(std::vector<std::vector<int> > &similar_images)
+	int res = 1;
+
+	if(vec1.size() >= vec2.size())
+	{
+		vecOut = &vec1;
+		vecIn = &vec2;
+
+		res = -1;
+	}
+	else
+	{
+		vecOut = &vec2;
+		vecIn = &vec1;		
+	}
+
+	for(unsigned int i = 0; i < vecIn->size(); ++i)
+	{
+		if(!isInCollection(*(vecIn->begin() + i), *vecOut))
+		{
+			return 0;
+		}
+	}
+
+	return res;
+}
+
+
+
+void Graph::getCliques(std::vector<std::vector<int> > &cliques)
 {
 	std::vector<int> tmp;
 	int tmp_size = 0, j_compare, i_compare, num;
@@ -89,39 +121,58 @@ void Graph::getClique(std::vector<std::vector<int> > &similar_images)
 			}
 		}
 
-		similar_images.push_back(tmp);
+		cliques.push_back(tmp);
 		tmp.clear();
 	}
 
 	
 	std::vector<int> collection;
 
-	for(unsigned int i = 0; i < similar_images.size(); ++i)
+	for(unsigned int i = 0; i < cliques.size(); ++i)
 	{
-		if(similar_images[i].size() <= 1)
+		if(cliques[i].size() <= 1)
 		{
-			similar_images.erase(similar_images.begin()+i);
+			cliques.erase(cliques.begin()+i);
 			i--;			
 		}
 		else
 		{
-			collection.push_back(similar_images[i][0]);
+			collection.push_back(cliques[i][0]);
 
-			for(unsigned int j = 1; j < similar_images[i].size(); ++j)
+			for(unsigned int j = 1; j < cliques[i].size(); ++j)
 			{
-				if(isInCollection(similar_images[i][j], collection) == 1)
+				if(isInCollection(cliques[i][j], collection) == 1)
 				{
-					similar_images[i].erase((similar_images[i]).begin()+j);
+					cliques[i].erase((cliques[i]).begin()+j);
 					j--;
 				}
 				else
 				{
-					collection.push_back(similar_images[i][j]);
+					collection.push_back(cliques[i][j]);
 				}
 				
 			}
 		}
 
 		collection.clear();
+	}
+
+	for(unsigned int i = 0; i < cliques.size(); ++i)
+	{
+		for(unsigned int j = i+1; j < cliques.size(); ++j)
+		{
+			if(contained(cliques[i], cliques[j]) == 1)
+			{
+				cliques.erase(cliques.begin()+i);
+				i--;
+				break;
+			}
+			else
+			if(contained(cliques[i], cliques[j]) == -1)
+			{
+				cliques.erase(cliques.begin()+j);
+				j--;
+			}
+		}
 	}
 }

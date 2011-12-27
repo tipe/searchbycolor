@@ -15,13 +15,13 @@
 
 
 
-void getImagesByColor(std::vector<Image*> &images, std::vector<int> &imagesByColor)
+void getImagesByColor(std::vector<Image*> &images, std::vector<int> &images_by_color, int red, int green, int blue, int range, int percent)
 { 
     for(unsigned int i = 0; i < images.size(); ++i)
     {
-        if(images[i]->getPercentColor(250, 0, 0, 70) >= 5)
+        if(images[i]->getPercentColor(red, green, blue, range) >= percent)
         {
-           imagesByColor.push_back(i);
+           images_by_color.push_back(i);
         }
     }
 }
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     {
     	if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
     	{
-    		string expansion = (strrchr(entry->d_name, '.'));	//TODO rename variable to "extension"
+    		string expansion = (strrchr(entry->d_name, '.'));
 
     		string file_name = argv[1];
     		file_name += "/";
@@ -81,31 +81,44 @@ int main(int argc, char *argv[])
     		{
     			image = reader->getImageStruct();
     			images.push_back(image);
-                images_names.push_back(file_name);
-
-    			
+                images_names.push_back(file_name);    			
     		}
     		
     	}        
     }
 
-    ImagesComparative comparative;
-    std::vector<std::vector<int> > similar_images;
-    comparative.getSimilarImages(images, similar_images);
 
-    for(unsigned int i = 0; i < similar_images.size(); ++i)
+    // search by color
+
+    std::vector<int> images_by_color;
+
+    getImagesByColor(images, images_by_color, 80, 170, 190, 60, 5);
+
+    for(int i = 0; i < images_by_color.size(); ++i)
     {
-        for(unsigned int j = 0; j < similar_images[i].size(); ++j)
-        {
-            std::cout<<images_names[similar_images[i][j]]<<" ";
-        }
-        std::cout<<std::endl;
+        std::cout<<images_names[images_by_color[i]]<<std::endl;
     }
 
-    for(unsigned int i = 0; i < images.size(); ++i)
-    {
-    	delete images[i];
-    }
+
+    // search similar
+
+    // ImagesComparative comparative;
+    // std::vector<std::vector<int> > similar_images;
+    // comparative.getSimilarImages(images, similar_images);
+
+    // for(unsigned int i = 0; i < similar_images.size(); ++i)
+    // {
+    //     for(unsigned int j = 0; j < similar_images[i].size(); ++j)
+    //     {
+    //         std::cout<<images_names[similar_images[i][j]]<<" ";
+    //     }
+    //     std::cout<<std::endl;
+    // }
+
+    // for(unsigned int i = 0; i < images.size(); ++i)
+    // {
+    // 	delete images[i];
+    // }
     
     closedir(dir);
 

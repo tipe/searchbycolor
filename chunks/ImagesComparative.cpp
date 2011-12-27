@@ -17,54 +17,41 @@ ImagesComparative::ImagesComparative()
 
 ImagesComparative::~ImagesComparative()
 {
-	for(unsigned int i = 0; i < images_dists.size(); ++i)	//TODO objects should be deleted after each buildGraph() call!
-	{
-		images_dists[i]->~Distribution();	//TODO don't call destructor directly!
-	}
+	
 }
 
 
 void ImagesComparative::buildGraph(std::vector<Image*> &images, Graph *graph)
 {
-	int images_count = images.size();
+	std::vector<Distribution*> images_dists;
 
-	Distribution *image_dist;
-
-	
-
-	for(int i = 0; i < images_count; ++i)
+	for(unsigned int i = 0; i < images.size(); ++i)
 	{
-		image_dist = new Distribution();
+		Distribution *image_dist = new Distribution();
 
 		images[i]->getDistribution(image_dist);
 		
 		images_dists.push_back(image_dist);
 	}
 
-	bool similar;
-
-	
-	for(int i = 0; i < images_count; ++i)
+	for(unsigned int i = 0; i < images.size(); ++i)
 	{
-		for(int j = i+1; j < images_count; ++j)
+		for(unsigned int j = i+1; j < images.size(); ++j)
 		{
 			if(i == j) break;
 
-			similar = images_dists[i]->compare(images_dists[j]);
+			bool similar = images_dists[i]->compare(images_dists[j]);
 			graph->setAdjacency(i,j,similar);
 		}
 	}
 
-	std::cerr<<"graph:"<<std::endl;	//TODO suppress output
-
-	for(int i = 0; i < images_count; ++i)
+	
+	for(unsigned int i = 0; i < images_dists.size(); ++i)
 	{
-		for(int j = 0; j < images_count; ++j)
-		{
-			std::cerr<<graph->getAdjacency(i,j)<<" ";			
-		}
-		std::cerr<<std::endl;
+		delete images_dists[i];
 	}
+
+	images_dists.clear();
 }
 
 

@@ -30,6 +30,7 @@ void ImagesComparative::buildGraph(std::vector<Image*> &images, Graph *graph)
 
 	Distribution *image_dist;
 
+	
 
 	for(int i = 0; i < images_count; ++i)
 	{
@@ -69,7 +70,6 @@ void ImagesComparative::buildGraph(std::vector<Image*> &images, Graph *graph)
 
 void ImagesComparative::getSimilarImages(std::vector<Image*> &images, std::vector<std::vector<int> > &similar_images)
 {
-	std::cout<<"!!!!"<<std::endl;
 	Graph graph(images.size());
 	buildGraph(images, &graph);
 

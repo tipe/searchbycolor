@@ -56,7 +56,6 @@ void BMPReader::setImageColors(Image *image, ifstream &file)
 			{
 				if(bits_per_pixel <= 8)
 				{
-					if(j < img_width - img_width % 8 + 1)
 					{
 						char buf = readByte(file);
 
@@ -161,7 +160,6 @@ void BMPReader::getUncomprColors(Image *image, ifstream &file)
 
 				img_pos += 2;
 			}
-
 	}	
 }
 
@@ -215,13 +213,6 @@ Image* BMPReader::getImageStruct()
 	{
 		shift = ( (file_size - offset)*8 - bits_per_pixel*img_height*img_width )/img_height;
 		shift /= 8;
-
-		// switch(bits_per_pixel)
-		// {
-		// 	case 1:
-
-		// 		shift = (file_size - offset - img_height*img_width)/img_height;
-		// }
 	}
 	else
 	{

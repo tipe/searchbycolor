@@ -30,7 +30,7 @@ Distribution::Distribution(int size)
 
 Distribution::~Distribution()
 {
-	for(int i = 0; i < size_distribution; i++) 
+	for(int i = 0; i < size_distribution; i++)	//TODO simplify 
 	{
 		for(int j = 0; j < size_distribution; j++) 
 		{
@@ -47,7 +47,7 @@ Distribution::~Distribution()
 }
 
 
-int Distribution::getDivider()
+int Distribution::getDivider()	//TODO rename
 {
 	return size_distribution;
 }
@@ -93,7 +93,7 @@ int Distribution::compare(Distribution *dist, int range_percent)
 		}
 	}
 
-	if(count >= pow(size_distribution, 3))
+	if(count >= pow(size_distribution, 3))	//TODO simplify
 	{
 		return 1;
 	}

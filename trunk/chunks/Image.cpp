@@ -115,7 +115,7 @@ void Image::getDistribution(Distribution *distribution)
 	int border = 256/distribution->getDivider();
 	int img_size = height*width;
 
-	int flag; flag =0; if(img_size == 16384) flag = 1;
+	int flag; flag =0; if(img_size == 16384) flag = 1;	//TODO remove debugging code
 
 	for(int i = 0; i < height; i++)
 	{

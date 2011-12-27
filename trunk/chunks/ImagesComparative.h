@@ -8,7 +8,7 @@
 #include "Graph.h"
 
 
-class ImagesComparative
+class ImagesComparative	//TODO rename to ImagesComparison
 {
 private:
 	std::vector<Distribution*> images_dists;

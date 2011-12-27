@@ -32,7 +32,6 @@ void PNGReader::getIHDRData(ifstream &file)
 	img_height       = readInt(file);
 	bit_depth        = readByte(file);
 	color_type       = readByte(file);
-	//cerr<<"color_type = "<<color_type<<endl;
 	compr_method     = readByte(file);
 	filter_method    = readByte(file);
 	interlace_method = readByte(file);
@@ -107,8 +106,9 @@ void PNGReader::doInitData()
 		if(strcmp(buf, "PLTE")==0)
 		{
 			int colors_in_color_table = data_length/3;
+			//cerr<<"colors_in_color_table = "<<colors_in_color_table<<endl;
 
-			cout<<"PLTE "<<colors_in_color_table<<endl;
+			//cout<<"PLTE "<<data_length<<endl;
 
 			color_table = new Pixel[colors_in_color_table];
 
@@ -295,7 +295,7 @@ void PNGReader::doDeFilteringType0(int j_count, int j_delta, int cur_small_img, 
 	int cur_col = 0;
 	int pix_i, pix_j;
 
-	for(int j = 2; j <= 2 + j_count - j_delta + 1; j+=j_delta)
+	for(int j = 2; j <= 2 + j_count - j_delta; j+=j_delta)
 	{
 		if(interlace_method == 0)
 		{
@@ -381,7 +381,7 @@ void PNGReader::doDeFiltering(V_ScanLines &v_scanlines, Image *image)
 		j_count = v_scanlines[i].size() - 2;
 
 		int filt_type = getUnsignedInt(v_scanlines[i][1]);
-		//cerr<<"filt_type = "<<filt_type<<endl;
+		//cerr<<" filt_type = "<<filt_type;
 		
 		int cur_small_img = v_scanlines[i][0];
 		int cur_col = 0, cur_row = 0;

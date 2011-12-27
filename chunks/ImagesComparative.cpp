@@ -17,9 +17,9 @@ ImagesComparative::ImagesComparative()
 
 ImagesComparative::~ImagesComparative()
 {
-	for(unsigned int i = 0; i < images_dists.size(); ++i)
+	for(unsigned int i = 0; i < images_dists.size(); ++i)	//TODO objects should be deleted after each buildGraph() call!
 	{
-		images_dists[i]->~Distribution();
+		images_dists[i]->~Distribution();	//TODO don't call destructor directly!
 	}
 }
 
@@ -55,7 +55,7 @@ void ImagesComparative::buildGraph(std::vector<Image*> &images, Graph *graph)
 		}
 	}
 
-	std::cerr<<"graph:"<<std::endl;
+	std::cerr<<"graph:"<<std::endl;	//TODO suppress output
 
 	for(int i = 0; i < images_count; ++i)
 	{

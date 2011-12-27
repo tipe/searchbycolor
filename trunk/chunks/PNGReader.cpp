@@ -332,9 +332,9 @@ void PNGReader::doDeFilteringType0(int j_count, int j_delta, int cur_small_img, 
 			}
 
 			image->setPixel(pix_i, pix_j, getUnsignedInt(scanline[j]),
-			                		  getUnsignedInt(scanline[j+1]),
-			                		  getUnsignedInt(scanline[j+2]),
-			                		  alpha);
+				                		  getUnsignedInt(scanline[j+1]),
+				                		  getUnsignedInt(scanline[j+2]),
+				                		  alpha);
 		}
 		else
 		if(color_type == 3)

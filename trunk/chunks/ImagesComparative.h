@@ -8,10 +8,9 @@
 #include "Graph.h"
 
 
-class ImagesComparative	//TODO rename to ImagesComparison
+class ImagesComparative
 {
 private:
-	std::vector<Distribution*> images_dists;
 	void buildGraph(std::vector<Image*> &images, Graph *graph);
 		
 

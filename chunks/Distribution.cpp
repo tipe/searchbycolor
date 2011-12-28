@@ -47,7 +47,7 @@ Distribution::~Distribution()
 }
 
 
-int Distribution::getDivider()
+int Distribution::getSizeDistribution()
 {
 	return size_distribution;
 }
@@ -72,7 +72,7 @@ void Distribution::addValue(int i, int j, int k, float delta)
 
 int Distribution::compare(Distribution *dist, int range_percent)
 {
-	if(size_distribution != dist->getDivider())
+	if(size_distribution != dist->getSizeDistribution())
 	{
 		throw std::runtime_error("Bad distribution comparing");
 	}

@@ -13,7 +13,7 @@ public:
 	Distribution(int size=4);
 	~Distribution();
 
-	int getDivider();
+	int getSizeDistribution();
 
 	void setValue(int i, int j, int k, float value);
 	float getValue(int i, int j, int k);

@@ -1,9 +1,9 @@
 all: chunks
 
-chunks: chunks.o PNGReader.o BMPReader.o MyDecompressor.o ImageReader.o Image.o Distribution.o ImagesComparative.o Graph.o
-	g++ chunks.o PNGReader.o BMPReader.o MyDecompressor.o ImageReader.o Image.o Distribution.o ImagesComparative.o Graph.o -lz -o chunks
+chunks: chunks.o PNGReader.o BMPReader.o MyDecompressor.o ImageReader.o Image.o Distribution.o ImagesComparison.o Graph.o
+	g++ chunks.o PNGReader.o BMPReader.o MyDecompressor.o ImageReader.o Image.o Distribution.o ImagesComparison.o Graph.o -lz -o chunks
 
-chunks.o: chunks.cpp PNGReader.h BMPReader.h ImagesComparative.h
+chunks.o: chunks.cpp PNGReader.h BMPReader.h ImagesComparison.h
 	g++ -c chunks.cpp -Wall -o chunks.o
 
 ImageReader.o: ImageReader.h
@@ -27,8 +27,8 @@ Distribution.o: Distribution.cpp Distribution.h
 Graph.o: Graph.cpp Graph.h
 	g++ -c Graph.cpp -Wall -o Graph.o
 
-ImagesComparative.o: ImagesComparative.cpp ImagesComparative.h Graph.h Distribution.h
-	g++ -c ImagesComparative.cpp -Wall -o ImagesComparative.o
+ImagesComparison.o: ImagesComparison.cpp ImagesComparison.h Graph.h Distribution.h
+	g++ -c ImagesComparison.cpp -Wall -o ImagesComparison.o
 
 clean:
 	rm -f *.o chunks

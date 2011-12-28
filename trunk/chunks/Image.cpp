@@ -112,10 +112,8 @@ float Image::getPercentColor(unsigned int r, unsigned int g, unsigned int b, uns
 
 void Image::getDistribution(Distribution *distribution)
 {
-	int border = 256/distribution->getDivider();
+	int border = 256/distribution->getSizeDistribution();
 	int img_size = height*width;
-
-	int flag; flag =0; if(img_size == 16384) flag = 1;
 
 	for(int i = 0; i < height; i++)
 	{

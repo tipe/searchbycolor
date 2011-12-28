@@ -10,7 +10,7 @@
 
 #include "PNGReader.h"
 #include "BMPReader.h"
-#include "ImagesComparative.h"
+#include "ImagesComparison.h"
 
 
 
@@ -90,35 +90,35 @@ int main(int argc, char *argv[])
 
     // search by color
 
-    std::vector<int> images_by_color;
+    // std::vector<int> images_by_color;
 
-    getImagesByColor(images, images_by_color, 80, 170, 190, 60, 5);
+    // getImagesByColor(images, images_by_color, 80, 170, 190, 100, 5);
 
-    for(int i = 0; i < images_by_color.size(); ++i)
-    {
-        std::cout<<images_names[images_by_color[i]]<<std::endl;
-    }
+    // for(int i = 0; i < images_by_color.size(); ++i)
+    // {
+    //     std::cout<<images_names[images_by_color[i]]<<std::endl;
+    // }
 
 
     // search similar
 
-    // ImagesComparative comparative;
-    // std::vector<std::vector<int> > similar_images;
-    // comparative.getSimilarImages(images, similar_images);
+    ImagesComparison comparative;
+    std::vector<std::vector<int> > similar_images;
+    comparative.getSimilarImages(images, similar_images);
 
-    // for(unsigned int i = 0; i < similar_images.size(); ++i)
-    // {
-    //     for(unsigned int j = 0; j < similar_images[i].size(); ++j)
-    //     {
-    //         std::cout<<images_names[similar_images[i][j]]<<" ";
-    //     }
-    //     std::cout<<std::endl;
-    // }
+    for(unsigned int i = 0; i < similar_images.size(); ++i)
+    {
+        for(unsigned int j = 0; j < similar_images[i].size(); ++j)
+        {
+            std::cout<<images_names[similar_images[i][j]]<<" ";
+        }
+        std::cout<<std::endl;
+    }
 
-    // for(unsigned int i = 0; i < images.size(); ++i)
-    // {
-    // 	delete images[i];
-    // }
+    for(unsigned int i = 0; i < images.size(); ++i)
+    {
+    	delete images[i];
+    }
     
     closedir(dir);
 

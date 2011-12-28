@@ -52,27 +52,22 @@ int main(int argc, char *argv[])
     {
     	if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
     	{
-    		string expansion = (strrchr(entry->d_name, '.'));
+    		string extension = (strrchr(entry->d_name, '.'));
 
     		string file_name = argv[1];
     		file_name += "/";
     		file_name += entry->d_name;
-    		//cout<<"file = "<<file_name<<endl;
 
     		Image *image;
     		ImageReader *reader = NULL;
 
-    		if(expansion == ".png")
+    		if(extension == ".png")
     		{
-    			//cout<<"png"<<endl;
-    			//cout<<"file = "<<file_name<<endl;
     			reader = new PNGReader(file_name);  
     		}
     		else
-    		if(expansion == ".bmp")
+    		if(extension == ".bmp")
     		{
-    			//cout<<"bmp"<<endl;
-    			//cout<<"file = "<<file_name<<endl;
     			reader = new BMPReader(file_name);
     		}
 
